@@ -11,6 +11,7 @@ def create_app() -> FastAPI:
         allow_origins=[
             "http://localhost:5173",
             "https://portofolio-9vcx.vercel.app",
+            "https://portofolio-45vh.vercel.app",
         ],
         allow_methods=["*"],
         allow_headers=["*"],
