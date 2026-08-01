@@ -146,6 +146,7 @@ export default function Projects() {
                     View Impact
                   </Link>
                   
+                  <a
                     href={project.github_url}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -155,6 +156,7 @@ export default function Projects() {
                     GitHub
                   </a>
                   
+                  <a
                     href={project.demo_url}
                     target="_blank"
                     rel="noopener noreferrer"
