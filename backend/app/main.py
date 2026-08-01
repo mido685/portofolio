@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.routes import projects as projects_router
 
 
@@ -11,8 +10,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=[
             "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "https://your-frontend.vercel.app",  # update once deployed
+            "https://portofolio-9vcx.vercel.app",
         ],
         allow_methods=["*"],
         allow_headers=["*"],
