@@ -39,8 +39,11 @@ async def upload_project_image(slug: str, image: UploadFile = File(...)):
     ext = Path(image.filename).suffix
     blob_path = f"projects/{slug}-{uuid.uuid4().hex}{ext}"
 
-    blob_result = vercel_blob.put(blob_path, contents, {"access": "public"})
-    image_url = blob_result["url"]
+    try:
+        blob_result = vercel_blob.put(blob_path, contents, {"access": "public"})
+        image_url = blob_result["url"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Blob upload failed: {str(e)}")
 
     updated = update_project_image(slug, image_url)
 
