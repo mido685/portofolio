@@ -38,6 +38,24 @@ const emptyProject: ProjectPayload = {
   images: [],
 };
 
+function AdminLogo({ size = "md" }: { size?: "sm" | "md" }) {
+  const dimensions = size === "sm" ? "h-14 w-14" : "h-24 w-24";
+
+  return (
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      poster="/assets/stark-logo-poster.png"
+      className={`${dimensions} rounded-full border-2 border-primary bg-background object-contain shadow-[0_0_28px_rgba(0,212,170,0.35)]`}
+    >
+      <source src="/assets/stark-logo.webm" type="video/webm" />
+      <source src="/assets/stark-logo.mp4" type="video/mp4" />
+    </video>
+  );
+}
+
 function listToText(values: string[] | null | undefined) {
   return values?.join("\n") ?? "";
 }
@@ -199,7 +217,10 @@ export default function Admin() {
             <ArrowLeft size={16} />
             Back to site
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-primary">Admin Dashboard</h1>
+          <div className="mt-6 flex justify-center">
+            <AdminLogo />
+          </div>
+          <h1 className="mt-5 text-center text-2xl font-bold text-primary">Admin Dashboard</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Enter the backend admin secret to manage portfolio projects.
           </p>
@@ -221,12 +242,15 @@ export default function Admin() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto max-w-7xl py-8">
         <div className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-center md:justify-between">
-          <div>
+          <div className="flex items-center gap-4">
+            <AdminLogo size="sm" />
+            <div>
             <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
               <ArrowLeft size={16} />
               Back to site
             </Link>
             <h1 className="mt-3 text-3xl font-bold text-primary">Admin Dashboard</h1>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={loadProjects}>
