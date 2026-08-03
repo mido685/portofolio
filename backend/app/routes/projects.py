@@ -1,9 +1,18 @@
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from pydantic import BaseModel, Field
 import vercel_blob
 
-from app.database.projects import get_all_projects, get_project_by_slug, update_project_image
+from app.core.auth import require_admin
+from app.database.projects import (
+    delete_project,
+    get_all_projects,
+    get_project_by_slug,
+    insert_project,
+    update_project,
+    update_project_image,
+)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -11,9 +20,32 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 MAX_SIZE = 5 * 1024 * 1024  # 5MB
 
 
+class ProjectPayload(BaseModel):
+    slug: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    description: str | None = None
+    github_url: str | None = None
+    demo_url: str | None = None
+    stars: int = Field(default=0, ge=0, le=5)
+    tech: list[str] = Field(default_factory=list)
+    problem: str | None = None
+    solution: str | None = None
+    enterprise: list[str] = Field(default_factory=list)
+    images: list[str] = Field(default_factory=list)
+    image_url: str | None = None
+
+
 @router.get("")
 def list_projects():
     return {"projects": get_all_projects()}
+
+
+@router.post("", dependencies=[Depends(require_admin)])
+def create_project(payload: ProjectPayload):
+    project = insert_project(**payload.dict())
+    if not project:
+        raise HTTPException(status_code=409, detail="Project slug already exists")
+    return project
 
 
 @router.get("/{slug}")
@@ -24,7 +56,25 @@ def get_project(slug: str):
     return project
 
 
-@router.post("/{slug}/image")
+@router.put("/{slug}", dependencies=[Depends(require_admin)])
+def edit_project(slug: str, payload: ProjectPayload):
+    data = payload.dict()
+    data.pop("slug", None)
+    project = update_project(slug, **data)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
+@router.delete("/{slug}", dependencies=[Depends(require_admin)])
+def remove_project(slug: str):
+    project = delete_project(slug)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return {"deleted": project}
+
+
+@router.post("/{slug}/image", dependencies=[Depends(require_admin)])
 async def upload_project_image(slug: str, image: UploadFile = File(...)):
     if not get_project_by_slug(slug):
         raise HTTPException(status_code=404, detail="Project not found")

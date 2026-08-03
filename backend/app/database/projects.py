@@ -43,6 +43,80 @@ def update_project_image(slug: str, image_url: str):
         conn.close()
 
 
+def update_project(
+    slug: str,
+    title: str,
+    description: str = None,
+    github_url: str = None,
+    demo_url: str = None,
+    stars: int = 0,
+    tech: list = None,
+    problem: str = None,
+    solution: str = None,
+    enterprise: list = None,
+    images: list = None,
+    image_url: str = None,
+):
+    conn = get_connection()
+    try:
+        cur = dict_cursor(conn)
+        cur.execute(
+            """
+            UPDATE projects
+            SET title = %s,
+                description = %s,
+                github_url = %s,
+                demo_url = %s,
+                stars = %s,
+                tech = %s,
+                problem = %s,
+                solution = %s,
+                enterprise = %s,
+                images = %s,
+                image_url = %s
+            WHERE slug = %s
+            RETURNING *
+            """,
+            (
+                title,
+                description,
+                github_url,
+                demo_url,
+                stars,
+                tech,
+                problem,
+                solution,
+                enterprise,
+                images,
+                image_url,
+                slug,
+            ),
+        )
+        row = cur.fetchone()
+        conn.commit()
+        return row
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def delete_project(slug: str):
+    conn = get_connection()
+    try:
+        cur = dict_cursor(conn)
+        cur.execute("DELETE FROM projects WHERE slug = %s RETURNING *", (slug,))
+        row = cur.fetchone()
+        conn.commit()
+        return row
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def insert_project(
     slug: str,
     title: str,

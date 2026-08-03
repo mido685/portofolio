@@ -13,6 +13,7 @@ import BackendEngineering from "./pages/BackendEngineering";
 import ModelDeployment from "./pages/ModelDeployment";
 import AiConsulting from "./pages/AiConsulting";
 import ProjectDetail from "./pages/ProjectDetail";
+import Admin from "./pages/Admin";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
       <Route path={"/backend-engineering"} component={BackendEngineering} />
       <Route path={"/model-deployment"} component={ModelDeployment} />
       <Route path={"/ai-consulting"} component={AiConsulting} />
+      <Route path={"/admin"} component={Admin} />
       <Route path={"/projects/:slug"} component={ProjectDetail} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

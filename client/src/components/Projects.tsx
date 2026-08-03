@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Github, ExternalLink, BarChart3, Upload } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Github, ExternalLink, BarChart3 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 type Project = {
   slug: string;
@@ -30,8 +30,6 @@ const API_BASE = "https://portofolio-theta-jet-96.vercel.app";
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [uploadingSlug, setUploadingSlug] = useState<string | null>(null);
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     fetch(`${API_BASE}/api/projects`)
@@ -39,30 +37,6 @@ export default function Projects() {
       .then((data) => setProjects(data.projects))
       .catch((err) => console.error("Failed to load projects", err));
   }, []);
-
-  async function handleFileChange(slug: string, file: File) {
-    setUploadingSlug(slug);
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/projects/${slug}/image`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-
-      setProjects((prev) =>
-        prev.map((p) => (p.slug === slug ? { ...p, image_url: data.imageUrl } : p))
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Failed to upload image. Please try again.");
-    } finally {
-      setUploadingSlug(null);
-    }
-  }
 
   return (
     <section id="projects" className="py-24 bg-[#0d1117]">
@@ -94,25 +68,6 @@ export default function Projects() {
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#111827] to-transparent" />
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={(el) => (fileInputRefs.current[project.slug] = el)}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileChange(project.slug, file);
-                  }}
-                />
-                <button
-                  onClick={() => fileInputRefs.current[project.slug]?.click()}
-                  disabled={uploadingSlug === project.slug}
-                  className="absolute top-2 right-2 flex items-center gap-1 px-2.5 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs rounded-md backdrop-blur-sm transition-all disabled:opacity-50"
-                >
-                  <Upload size={12} />
-                  {uploadingSlug === project.slug ? "Uploading..." : "Change Photo"}
-                </button>
               </div>
 
               <div className="p-5">
