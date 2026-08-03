@@ -42,17 +42,21 @@ function AdminLogo({ size = "md" }: { size?: "sm" | "md" }) {
   const dimensions = size === "sm" ? "h-14 w-14" : "h-24 w-24";
 
   return (
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      poster="/assets/stark-logo-poster.png"
-      className={`${dimensions} rounded-full border-2 border-primary bg-background object-contain shadow-[0_0_28px_rgba(0,212,170,0.35)]`}
+    <div
+      className={`${dimensions} overflow-hidden rounded-full border-2 border-primary bg-background shadow-[0_0_28px_rgba(0,212,170,0.35)]`}
     >
-      <source src="/assets/stark-logo.webm" type="video/webm" />
-      <source src="/assets/stark-logo.mp4" type="video/mp4" />
-    </video>
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        poster="/assets/stark-logo-poster.png"
+        className="h-full w-full scale-[1.55] object-cover"
+      >
+        <source src="/assets/stark-logo.webm" type="video/webm" />
+        <source src="/assets/stark-logo.mp4" type="video/mp4" />
+      </video>
+    </div>
   );
 }
 
