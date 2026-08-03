@@ -8,6 +8,8 @@ import About from "@/components/About";
 import Projects from "@/components/Projects";
 import Technologies from "@/components/Technologies";
 import Architecture from "@/components/Architecture";
+import Achievements from "@/components/Achievements";
+import CurrentlyBuilding from "@/components/CurrentlyBuilding";
 import Testimonials from "@/components/Testimonials";
 import Blog from "@/components/Blog";
 import Contact from "@/components/Contact";
@@ -23,6 +25,8 @@ export default function Home() {
       <Projects />
       <Technologies />
       <Architecture />
+      <Achievements />
+      <CurrentlyBuilding />
       <Testimonials />
       <Blog />
       <Contact />

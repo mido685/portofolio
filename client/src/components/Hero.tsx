@@ -1,4 +1,12 @@
 import { motion } from "framer-motion";
+import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
+
+const proofStats = [
+  { value: "3", label: "shipped AI products" },
+  { value: "28", label: "clinical domains" },
+  { value: "25K", label: "NER examples" },
+  { value: "42K", label: "token vocabulary" },
+];
 
 export default function Hero() {
   const handleNavClick = (href: string) => {
@@ -9,20 +17,17 @@ export default function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-[90vh] flex items-center px-4 pt-24 pb-12 overflow-hidden"
+      className="relative min-h-[92vh] flex items-center px-4 pt-24 pb-12 overflow-hidden"
       style={{
         backgroundImage: "url(/manus-storage/stark-ai-hero-bg_b5ce11f9.jpg)",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      {/* Overlay */}
       <div className="absolute inset-0 bg-[#0a0e1a]/80" />
 
       <div className="relative z-10 container max-w-7xl mx-auto grid lg:grid-cols-[1.4fr_1fr] gap-12 items-center">
-        {/* Left: Logo + Title + Content */}
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-          {/* Logo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -42,7 +47,20 @@ export default function Hero() {
             </video>
           </motion.div>
 
-          {/* Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-5 flex flex-wrap items-center justify-center lg:justify-start gap-2"
+          >
+            <span className="px-3 py-1 rounded-full border border-[#00d4aa]/25 bg-[#00d4aa]/10 text-[#00d4aa] text-[11px] font-mono-data uppercase tracking-[0.18em]">
+              Available for AI/backend roles
+            </span>
+            <span className="px-3 py-1 rounded-full border border-gray-700 bg-[#111827]/70 text-gray-300 text-[11px] font-mono-data uppercase tracking-[0.18em]">
+              Cairo / Remote
+            </span>
+          </motion.div>
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -52,29 +70,26 @@ export default function Hero() {
             STARK AI
           </motion.h1>
 
-          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-lg md:text-xl text-gray-400 font-mono-data tracking-[0.3em] uppercase mb-10 font-stencil"
+            className="text-lg md:text-xl text-gray-400 font-mono-data tracking-[0.18em] uppercase mb-10 font-stencil"
           >
-            Intelligent Systems
+            AI Engineer building production-grade systems
           </motion.p>
 
-          {/* Description */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-gray-300 text-base md:text-lg max-w-2xl mb-10 leading-relaxed"
           >
-            I design and develop real-world AI systems including chatbots, RAG pipelines,
-            and cost intelligence tools that help businesses reduce errors, automate workflows,
-            and make faster decisions.
+            I build applied AI products from model logic to backend deployment: medical NLP,
+            custom tokenizers, inventory prediction APIs, and multi-tenant SaaS systems that turn
+            research ideas into working software.
           </motion.p>
 
-          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -83,53 +98,74 @@ export default function Hero() {
           >
             <button
               onClick={() => handleNavClick("#projects")}
-              className="px-6 py-3 bg-[#00d4aa] text-[#0a0e1a] font-semibold rounded-lg hover:bg-[#00e5bb] transition-all duration-200 active:scale-[0.97]"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#00d4aa] text-[#0a0e1a] font-semibold rounded-lg hover:bg-[#00e5bb] hover:shadow-[0_0_24px_rgba(0,212,170,0.28)] transition-all duration-200 active:scale-[0.97]"
             >
-              View Projects
+              View Case Studies
+              <ArrowRight size={17} />
             </button>
             <button
               onClick={() => handleNavClick("#contact")}
               className="px-6 py-3 border-2 border-[#00d4aa] text-[#00d4aa] font-semibold rounded-lg hover:bg-[#00d4aa]/10 transition-all duration-200 active:scale-[0.97]"
             >
-              Contact Us
+              Hire / Collaborate
             </button>
             <a
               href="#contact"
-              onClick={(e) => { e.preventDefault(); handleNavClick("#contact"); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavClick("#contact");
+              }}
               className="px-6 py-3 border border-gray-600 text-gray-300 font-semibold rounded-lg hover:border-[#00d4aa] hover:text-[#00d4aa] transition-all duration-200 active:scale-[0.97]"
             >
-              Download CV
+              Request Resume
             </a>
           </motion.div>
 
-          {/* Stats line */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.75 }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mb-8"
+          >
+            {proofStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-lg border border-[#00d4aa]/15 bg-[#111827]/65 px-4 py-3 text-center lg:text-left"
+              >
+                <div className="text-[#00d4aa] text-xl font-bold font-mono-data">
+                  {stat.value}
+                </div>
+                <div className="text-gray-500 text-[11px] uppercase tracking-wide">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </motion.div>
+
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.85 }}
             className="text-sm text-gray-500 font-mono-data"
           >
-            ⚡ Built production AI systems for inventory intelligence, costing automation, and NLP chatbots
+            Built production-minded AI systems for NLP, inventory intelligence, costing automation,
+            and deployable APIs.
           </motion.p>
         </div>
 
-        {/* Right: Founder Card */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
           className="bg-[#111827]/80 backdrop-blur-sm border border-[#00d4aa]/20 rounded-2xl p-8 flex flex-col items-center text-center gap-4 card-glow"
         >
-          {/* Enlarged photo with layered glow effects */}
           <div className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center">
-            {/* Outer pulsing glow */}
             <motion.div
               animate={{ scale: [1, 1.08, 1], opacity: [0.35, 0.6, 0.35] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
               className="absolute inset-0 rounded-full bg-[#00d4aa] blur-3xl"
             />
 
-            {/* Rotating dashed ring */}
             <motion.svg
               animate={{ rotate: 360 }}
               transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
@@ -148,7 +184,6 @@ export default function Hero() {
               />
             </motion.svg>
 
-            {/* Counter-rotating thin ring */}
             <motion.svg
               animate={{ rotate: -360 }}
               transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
@@ -167,26 +202,6 @@ export default function Hero() {
               />
             </motion.svg>
 
-            {/* Dot grid accent */}
-            <svg
-              className="absolute -top-2 -left-4 w-16 h-16 opacity-60 pointer-events-none"
-              viewBox="0 0 60 60"
-              fill="none"
-            >
-              {Array.from({ length: 4 }).map((_, row) =>
-                Array.from({ length: 4 }).map((_, col) => (
-                  <circle
-                    key={`${row}-${col}`}
-                    cx={8 + col * 14}
-                    cy={8 + row * 14}
-                    r="2"
-                    fill="#00d4aa"
-                  />
-                ))
-              )}
-            </svg>
-
-            {/* Photo */}
             <motion.div
               whileHover={{ scale: 1.04 }}
               transition={{ duration: 0.3 }}
@@ -207,9 +222,31 @@ export default function Hero() {
             </p>
             <p className="text-gray-400 text-sm leading-relaxed">
               Specializing in Natural Language Processing, intelligent systems design, and
-              AI-powered assistant development — bridging cutting-edge AI research with
-              practical business applications.
+              AI-powered assistant development - bridging AI research with practical business
+              applications.
             </p>
+            <div className="mt-5 flex justify-center gap-3">
+              {[
+                { href: "mailto:mohamedstark874@gmail.com", icon: Mail, label: "Email" },
+                { href: "https://github.com/mido685", icon: Github, label: "GitHub" },
+                {
+                  href: "https://www.linkedin.com/in/mohamed-ibrahim-967831187",
+                  icon: Linkedin,
+                  label: "LinkedIn",
+                },
+              ].map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target={link.href.startsWith("http") ? "_blank" : undefined}
+                  rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  aria-label={link.label}
+                  className="w-10 h-10 rounded-lg border border-[#00d4aa]/20 bg-[#00d4aa]/10 text-[#00d4aa] flex items-center justify-center hover:bg-[#00d4aa]/20 transition-colors"
+                >
+                  <link.icon size={17} />
+                </a>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>

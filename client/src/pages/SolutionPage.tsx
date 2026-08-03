@@ -1,5 +1,7 @@
 import { CheckCircle2, LucideIcon } from "lucide-react";
 import CtaSection from "@/components/CtaSection";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 interface ProcessStep {
   title: string;
@@ -35,6 +37,7 @@ export default function SolutionPage({
 }: SolutionPageProps) {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Navbar />
       {/* Hero */}
       <div className="container mx-auto px-4 pt-24 pb-16 max-w-4xl text-center">
         {tagline && (
@@ -149,6 +152,7 @@ export default function SolutionPage({
       <div className="mt-20">
         <CtaSection />
       </div>
+      <Footer />
     </div>
   );
 }

@@ -82,6 +82,21 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 * {
   font-family: 'Inter', sans-serif;
 }
@@ -116,6 +131,11 @@ html {
 
 .card-glow:hover {
   box-shadow: 0 0 25px rgba(0, 212, 170, 0.2), inset 0 1px 0 rgba(0, 212, 170, 0.2);
+}
+
+:focus-visible {
+  outline: 2px solid #00d4aa;
+  outline-offset: 3px;
 }
 
 @layer base {

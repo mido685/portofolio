@@ -7,9 +7,8 @@ const navLinks = [
   { label: "Home", href: "#hero" },
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
-  { label: "Technologies", href: "#technologies" },
-  { label: "Architecture", href: "#architecture" },
-  { label: "Testimonials", href: "#testimonials" },
+  { label: "Skills", href: "#technologies" },
+  { label: "Now", href: "#now" },
   { label: "Blog", href: "#blog" },
   { label: "Contact", href: "#contact" },
 ];
@@ -38,7 +37,11 @@ export default function Navbar() {
   const handleNavClick = (href: string) => {
     setMobileOpen(false);
     const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    window.location.href = `/${href}`;
   };
 
   return (
