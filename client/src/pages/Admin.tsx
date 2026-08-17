@@ -30,6 +30,7 @@ import {
   deleteArticle,
   deleteComment,
   deleteProject,
+  isAdminAuthError,
   listArticles,
   listComments,
   listProjects,
@@ -130,6 +131,17 @@ export default function Admin() {
     await Promise.all([loadProjects(), loadArticles(), secret ? loadComments() : Promise.resolve()]);
   }
 
+  function lockAdmin(message = "Invalid admin secret") {
+    sessionStorage.removeItem(ADMIN_SECRET_KEY);
+    setSecret("");
+    setSecretInput("");
+    setProjects([]);
+    setArticles([]);
+    setComments([]);
+    setStatus("");
+    setError(message);
+  }
+
   async function loadProjects() {
     try {
       setProjects(await listProjects());
@@ -155,11 +167,8 @@ export default function Admin() {
       setStatus("Comments synced.");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load comments.";
-      setError(message);
-      if (message === "Invalid admin secret") {
-        sessionStorage.removeItem(ADMIN_SECRET_KEY);
-        setSecret("");
-      }
+      if (isAdminAuthError(err)) lockAdmin(message);
+      else setError(message);
     }
   }
 
@@ -222,23 +231,14 @@ export default function Admin() {
       setSecret(value);
       setSecretInput("");
     } catch (err) {
-      sessionStorage.removeItem(ADMIN_SECRET_KEY);
-      setSecret("");
-      setError(err instanceof Error ? err.message : "Invalid admin secret");
+      lockAdmin(err instanceof Error ? err.message : "Invalid admin secret");
     } finally {
       setBusy(false);
     }
   }
 
   function signOut() {
-    sessionStorage.removeItem(ADMIN_SECRET_KEY);
-    setSecret("");
-    setSecretInput("");
-    setProjects([]);
-    setArticles([]);
-    setComments([]);
-    setStatus("");
-    setError("");
+    lockAdmin("");
   }
 
   function setProjectField<K extends keyof ProjectPayload>(key: K, value: ProjectPayload[K]) {
@@ -280,7 +280,8 @@ export default function Admin() {
       setSelectedProjectSlug(saved.slug);
       setStatus(`Saved "${saved.title}".`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save project.");
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to save project.");
     } finally {
       setBusy(false);
     }
@@ -296,7 +297,8 @@ export default function Admin() {
       setSelectedProjectSlug("new");
       setStatus("Project deleted.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete project.");
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to delete project.");
     } finally {
       setBusy(false);
     }
@@ -326,7 +328,8 @@ export default function Admin() {
       setSelectedArticleSlug(saved.slug);
       setStatus(`Saved article "${saved.title}".`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save article.");
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to save article.");
     } finally {
       setBusy(false);
     }
@@ -343,7 +346,8 @@ export default function Admin() {
       setSelectedArticleSlug("new");
       setStatus("Article deleted.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete article.");
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to delete article.");
     } finally {
       setBusy(false);
     }
@@ -357,7 +361,8 @@ export default function Admin() {
       await loadComments();
       setStatus(approved ? "Comment approved." : "Comment hidden.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update comment.");
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to update comment.");
     } finally {
       setBusy(false);
     }
@@ -372,7 +377,8 @@ export default function Admin() {
       await loadComments();
       setStatus("Comment deleted.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete comment.");
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to delete comment.");
     } finally {
       setBusy(false);
     }

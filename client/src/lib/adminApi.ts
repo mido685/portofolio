@@ -39,6 +39,17 @@ export type CommentPayload = {
   created_at?: string;
 };
 
+export class AdminAuthError extends Error {
+  constructor(message = "Invalid admin secret") {
+    super(message);
+    this.name = "AdminAuthError";
+  }
+}
+
+export function isAdminAuthError(error: unknown): error is AdminAuthError {
+  return error instanceof AdminAuthError;
+}
+
 async function request<T>(
   path: string,
   secret: string,
@@ -65,6 +76,10 @@ async function request<T>(
     } catch {
       // Keep the HTTP status fallback.
     }
+    if (response.status === 401) {
+      throw new AdminAuthError(message);
+    }
+
     throw new Error(message);
   }
 
