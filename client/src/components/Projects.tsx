@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Github, ExternalLink, BarChart3, GitBranch } from "lucide-react";
 import { useState, useEffect } from "react";
 import { projects as localProjects } from "@/data/projects";
+import { API_BASE } from "@/lib/apiBase";
 
 type Project = {
   slug: string;
@@ -17,8 +18,6 @@ type Project = {
   solution?: string;
   enterprise?: string[];
 };
-
-const API_BASE = "https://portofolio-theta-jet-96.vercel.app";
 
 const fallbackProjects: Project[] = localProjects.map((project) => ({
   slug: project.slug,

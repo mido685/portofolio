@@ -13,6 +13,7 @@ import BackendEngineering from "./pages/BackendEngineering";
 import ModelDeployment from "./pages/ModelDeployment";
 import AiConsulting from "./pages/AiConsulting";
 import ProjectDetail from "./pages/ProjectDetail";
+import ArticleDetail from "./pages/ArticleDetail";
 import Admin from "./pages/Admin";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
       <Route path={"/ai-consulting"} component={AiConsulting} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/projects/:slug"} component={ProjectDetail} />
+      <Route path={"/articles/:slug"} component={ArticleDetail} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

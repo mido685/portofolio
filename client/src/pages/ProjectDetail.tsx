@@ -16,6 +16,7 @@ import CtaSection from "@/components/CtaSection";
 import { projects as localProjects } from "@/data/projects";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { API_BASE } from "@/lib/apiBase";
 
 type Project = {
   slug: string;
@@ -31,8 +32,6 @@ type Project = {
   solution: string;
   enterprise: string[];
 };
-
-const API_BASE = "https://portofolio-theta-jet-96.vercel.app";
 
 const fallbackProjects: Project[] = localProjects.map((project) => ({
   slug: project.slug,

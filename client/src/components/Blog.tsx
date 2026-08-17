@@ -1,56 +1,63 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
+import { Link } from "wouter";
+import { ArticlePayload, listArticles } from "@/lib/adminApi";
 
-const blogPosts = [
+const fallbackArticles: ArticlePayload[] = [
   {
+    slug: "medical-wordpiece-tokenizer",
     title: "How I Built a Medical WordPiece Tokenizer from Scratch",
     category: "NLP",
     excerpt: "A practical breakdown of vocabulary training, subword choices, and clinical text preprocessing.",
-    date: "Planned",
+    content: "",
+    cover_image_url: null,
+    published: true,
   },
   {
+    slug: "bert-medication-ner",
     title: "Fine-Tuning BERT for Medication NER",
     category: "AI",
     excerpt: "Dataset generation, entity labels, evaluation traps, and deployment lessons from a medical reminder system.",
-    date: "Planned",
+    content: "",
+    cover_image_url: null,
+    published: true,
   },
   {
+    slug: "notebook-to-fastapi",
     title: "From Notebook to FastAPI: Serving ML Models Properly",
     category: "Backend",
     excerpt: "How to wrap inference, validation, and failure states in an API recruiters can actually inspect.",
-    date: "Planned",
-  },
-  {
-    title: "Designing Multi-Tenant SaaS Data Isolation",
-    category: "Systems",
-    excerpt: "What company-scoped tables, RBAC, audit logs, and period locks look like in an ERP backend.",
-    date: "Planned",
-  },
-  {
-    title: "Inventory Optimization Without Overclaiming AI",
-    category: "Product",
-    excerpt: "How to frame prediction systems honestly with constraints, confidence, and business value.",
-    date: "Planned",
-  },
-  {
-    title: "What Makes an AI Portfolio Feel Senior",
-    category: "Career",
-    excerpt: "A teardown of proof, architecture, metrics, screenshots, and case-study writing.",
-    date: "Planned",
+    content: "",
+    cover_image_url: null,
+    published: true,
   },
 ];
-
-const categories = ["All Categories", "AI", "NLP", "Backend", "Systems", "Product", "Career"];
 
 export default function Blog() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All Categories");
+  const [articles, setArticles] = useState<ArticlePayload[]>(fallbackArticles);
 
-  const filtered = blogPosts.filter((post) => {
+  useEffect(() => {
+    listArticles()
+      .then((data) => {
+        if (data.length > 0) setArticles(data);
+      })
+      .catch(() => setArticles(fallbackArticles));
+  }, []);
+
+  const categories = useMemo(
+    () => ["All Categories", ...Array.from(new Set(articles.map((article) => article.category).filter(Boolean)))],
+    [articles],
+  );
+
+  const filtered = articles.filter((post) => {
+    const needle = search.toLowerCase();
     const matchesSearch =
-      post.title.toLowerCase().includes(search.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(search.toLowerCase());
+      post.title.toLowerCase().includes(needle) ||
+      (post.excerpt ?? "").toLowerCase().includes(needle) ||
+      post.category.toLowerCase().includes(needle);
     const matchesCategory = category === "All Categories" || post.category === category;
     return matchesSearch && matchesCategory;
   });
@@ -65,12 +72,10 @@ export default function Blog() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-[#00d4aa]">
-            Technical Writing Roadmap
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#00d4aa]">Technical Writing</h2>
           <p className="text-gray-400 max-w-2xl mx-auto mt-4 text-sm leading-relaxed">
-            Recruiters and senior engineers trust builders who can explain tradeoffs. These article
-            slots make the portfolio ready for serious technical writing.
+            Recruiters and senior engineers trust builders who can explain tradeoffs. Articles and
+            reader comments are managed from the dashboard.
           </p>
         </motion.div>
 
@@ -79,7 +84,7 @@ export default function Blog() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
-              placeholder="Search article ideas..."
+              placeholder="Search articles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-[#111827] border border-[#00d4aa]/20 rounded-lg text-gray-300 text-sm placeholder:text-gray-600 focus:outline-none focus:border-[#00d4aa]/50 transition-all"
@@ -101,7 +106,7 @@ export default function Blog() {
         <div className="grid md:grid-cols-3 gap-6">
           {filtered.map((post, i) => (
             <motion.article
-              key={post.title}
+              key={post.slug}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -114,8 +119,16 @@ export default function Blog() {
               <h3 className="text-white font-semibold text-base mt-3 mb-2 group-hover:text-[#00d4aa] transition-colors">
                 {post.title}
               </h3>
-              <p className="text-gray-500 text-sm mb-4 leading-relaxed">{post.excerpt}</p>
-              <p className="text-gray-600 text-xs font-mono-data">{post.date}</p>
+              <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                {post.excerpt || "Article summary will appear here."}
+              </p>
+              <Link
+                href={`/articles/${post.slug}`}
+                className="inline-flex items-center gap-1.5 text-xs font-mono-data text-[#00d4aa] hover:text-white transition-colors"
+              >
+                Read article
+                <ArrowRight size={13} />
+              </Link>
             </motion.article>
           ))}
         </div>
