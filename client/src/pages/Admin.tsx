@@ -37,6 +37,7 @@ import {
   updateArticle,
   updateCommentStatus,
   updateProject,
+  verifyAdminSecret,
 } from "@/lib/adminApi";
 
 type AdminSection = "projects" | "articles" | "comments";
@@ -94,7 +95,8 @@ function AdminLogo() {
 
 export default function Admin() {
   const [secretInput, setSecretInput] = useState("");
-  const [secret, setSecret] = useState(() => sessionStorage.getItem(ADMIN_SECRET_KEY) || "");
+  const [secret, setSecret] = useState("");
+  const [checkingSavedSecret, setCheckingSavedSecret] = useState(() => Boolean(sessionStorage.getItem(ADMIN_SECRET_KEY)));
   const [section, setSection] = useState<AdminSection>("projects");
   const [projects, setProjects] = useState<ProjectPayload[]>([]);
   const [articles, setArticles] = useState<ArticlePayload[]>([]);
@@ -152,9 +154,42 @@ export default function Admin() {
       setComments(await listComments(secret));
       setStatus("Comments synced.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load comments.");
+      const message = err instanceof Error ? err.message : "Failed to load comments.";
+      setError(message);
+      if (message === "Invalid admin secret") {
+        sessionStorage.removeItem(ADMIN_SECRET_KEY);
+        setSecret("");
+      }
     }
   }
+
+  useEffect(() => {
+    const savedSecret = sessionStorage.getItem(ADMIN_SECRET_KEY);
+    if (!savedSecret) {
+      setCheckingSavedSecret(false);
+      return;
+    }
+
+    let active = true;
+
+    async function restoreSession() {
+      try {
+        await verifyAdminSecret(savedSecret);
+        if (active) setSecret(savedSecret);
+      } catch (err) {
+        sessionStorage.removeItem(ADMIN_SECRET_KEY);
+        if (active) setError(err instanceof Error ? err.message : "Saved admin secret is no longer valid.");
+      } finally {
+        if (active) setCheckingSavedSecret(false);
+      }
+    }
+
+    restoreSession();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (secret) loadAll();
@@ -172,21 +207,38 @@ export default function Admin() {
     setArticleDraft(selectedArticle ?? emptyArticle);
   }, [selectedArticle]);
 
-  function signIn(event: FormEvent) {
+  async function signIn(event: FormEvent) {
     event.preventDefault();
     const value = secretInput.trim();
     if (!value) return;
-    sessionStorage.setItem(ADMIN_SECRET_KEY, value);
-    setSecret(value);
-    setSecretInput("");
+
+    setBusy(true);
+    setError("");
+    setStatus("");
+
+    try {
+      await verifyAdminSecret(value);
+      sessionStorage.setItem(ADMIN_SECRET_KEY, value);
+      setSecret(value);
+      setSecretInput("");
+    } catch (err) {
+      sessionStorage.removeItem(ADMIN_SECRET_KEY);
+      setSecret("");
+      setError(err instanceof Error ? err.message : "Invalid admin secret");
+    } finally {
+      setBusy(false);
+    }
   }
 
   function signOut() {
     sessionStorage.removeItem(ADMIN_SECRET_KEY);
     setSecret("");
+    setSecretInput("");
     setProjects([]);
     setArticles([]);
     setComments([]);
+    setStatus("");
+    setError("");
   }
 
   function setProjectField<K extends keyof ProjectPayload>(key: K, value: ProjectPayload[K]) {
@@ -326,6 +378,17 @@ export default function Admin() {
     }
   }
 
+  if (checkingSavedSecret) {
+    return (
+      <main className="min-h-screen bg-[#0a0e1a] text-foreground flex items-center justify-center px-4">
+        <div className="flex items-center gap-3 text-primary">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-medium">Checking admin access...</span>
+        </div>
+      </main>
+    );
+  }
+
   if (!secret) {
     return (
       <main className="min-h-screen bg-[#0a0e1a] text-foreground flex items-center justify-center px-4">
@@ -342,8 +405,9 @@ export default function Admin() {
             Manage projects, technical articles, and public comments.
           </p>
           <Input className="mt-6" type="password" value={secretInput} onChange={(event) => setSecretInput(event.target.value)} placeholder="Admin secret" autoFocus />
-          <Button type="submit" className="mt-4 w-full">
-            <ShieldCheck size={16} />
+          {error && <div className="mt-4 rounded-md border border-destructive px-4 py-3 text-sm text-destructive">{error}</div>}
+          <Button type="submit" className="mt-4 w-full" disabled={busy}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck size={16} />}
             Unlock Dashboard
           </Button>
         </form>

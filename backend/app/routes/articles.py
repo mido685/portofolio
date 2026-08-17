@@ -76,6 +76,11 @@ def remove_article(slug: str):
     return {"deleted": article}
 
 
+@router.get("/admin/session", dependencies=[Depends(require_admin)])
+def verify_admin_session():
+    return {"ok": True}
+
+
 @router.get("/articles/{slug}/comments")
 def list_article_comments(slug: str):
     return {"comments": get_comments(article_slug=slug, approved_only=True)}

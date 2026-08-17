@@ -138,6 +138,10 @@ export async function listComments(secret: string): Promise<CommentPayload[]> {
   return data.comments;
 }
 
+export async function verifyAdminSecret(secret: string): Promise<void> {
+  await request<{ ok: boolean }>("/api/admin/session", secret);
+}
+
 export function updateCommentStatus(secret: string, id: number, approved: boolean) {
   return request<CommentPayload>(`/api/comments/${id}`, secret, {
     method: "PUT",
