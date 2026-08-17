@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { listTestimonials, TestimonialPayload } from "@/lib/adminApi";
 
-const testimonials = [
+const fallbackTestimonials = [
   {
     quote:
       "Placeholder for a verified client or collaborator quote about delivery quality, communication, and production mindset.",
@@ -27,7 +29,27 @@ const testimonials = [
   },
 ];
 
+function initialsFor(name: string) {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function Testimonials() {
+  const [testimonials, setTestimonials] = useState<TestimonialPayload[]>([]);
+
+  useEffect(() => {
+    listTestimonials()
+      .then(setTestimonials)
+      .catch(() => setTestimonials([]));
+  }, []);
+
+  const visibleTestimonials = testimonials.length > 0 ? testimonials : fallbackTestimonials;
+  const hasLiveTestimonials = testimonials.length > 0;
+
   return (
     <section id="testimonials" className="py-24 bg-[#0a0e1a]">
       <div className="container max-w-7xl mx-auto">
@@ -42,15 +64,16 @@ export default function Testimonials() {
             Testimonials
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto mt-4 text-sm leading-relaxed">
-            No fake praise. These are intentionally marked placeholders until real references are
-            collected.
+            {hasLiveTestimonials
+              ? "Client feedback and collaborator notes from recent portfolio work."
+              : "No fake praise. These are intentionally marked placeholders until real references are collected."}
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
+          {visibleTestimonials.map((t, i) => (
             <motion.div
-              key={t.name}
+              key={`${t.name}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -58,12 +81,12 @@ export default function Testimonials() {
               className="bg-[#111827] border border-[#00d4aa]/20 rounded-lg p-6 card-glow hover:border-[#00d4aa]/40 transition-all duration-300"
             >
               <span className="text-[10px] font-mono-data uppercase tracking-wider text-[#00d4aa] bg-[#00d4aa]/10 px-2 py-1 rounded">
-                {t.status}
+                {"status" in t ? t.status : `${t.rating}/5 review`}
               </span>
-              <p className="text-gray-400 text-sm italic my-5">"{t.quote}"</p>
+              <p className="text-gray-400 text-sm italic my-5">&quot;{t.quote}&quot;</p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#00d4aa]/20 flex items-center justify-center text-[#00d4aa] font-bold text-sm">
-                  {t.initials}
+                  {"initials" in t ? t.initials : initialsFor(t.name)}
                 </div>
                 <div>
                   <p className="text-white text-sm font-semibold">{t.name}</p>

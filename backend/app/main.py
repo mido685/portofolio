@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.schema import init_db
 from app.routes import articles as articles_router
 from app.routes import projects as projects_router
+from app.routes import testimonials as testimonials_router
 
 
 def create_app() -> FastAPI:
@@ -22,5 +23,6 @@ def create_app() -> FastAPI:
 
     application.include_router(articles_router.router, prefix="/api")
     application.include_router(projects_router.router, prefix="/api")
+    application.include_router(testimonials_router.router, prefix="/api")
 
     return application

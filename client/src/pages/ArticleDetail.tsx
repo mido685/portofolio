@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { ArrowLeft, MessageSquare, Send } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Send } from "lucide-react";
 import { Link, useParams } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -23,15 +23,35 @@ export default function ArticleDetail() {
   const [body, setBody] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
+    let active = true;
+    setLoading(true);
+    setArticle(null);
+
     getArticle(slug)
-      .then(setArticle)
-      .catch(() => setArticle(null));
+      .then((nextArticle) => {
+        if (active) setArticle(nextArticle);
+      })
+      .catch(() => {
+        if (active) setArticle(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     listArticleComments(slug)
-      .then(setComments)
-      .catch(() => setComments([]));
+      .then((nextComments) => {
+        if (active) setComments(nextComments);
+      })
+      .catch(() => {
+        if (active) setComments([]);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [slug]);
 
   async function submitComment(event: FormEvent) {
@@ -52,6 +72,18 @@ export default function ArticleDetail() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit comment.");
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Navbar />
+        <main className="container mx-auto flex max-w-3xl items-center gap-3 px-4 py-24 text-primary">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-medium">Loading article...</span>
+        </main>
+      </div>
+    );
   }
 
   if (!article) {

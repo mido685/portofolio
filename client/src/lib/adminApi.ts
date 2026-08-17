@@ -39,6 +39,18 @@ export type CommentPayload = {
   created_at?: string;
 };
 
+export type TestimonialPayload = {
+  id?: number;
+  name: string;
+  role: string | null;
+  quote: string;
+  rating: number;
+  approved: boolean;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export class AdminAuthError extends Error {
   constructor(message = "Invalid admin secret") {
     super(message);
@@ -216,4 +228,36 @@ export function uploadProjectImage(secret: string, slug: string, file: File) {
       body: formData,
     }
   );
+}
+
+export async function listTestimonials(): Promise<TestimonialPayload[]> {
+  const response = await fetch(`${API_BASE}/api/testimonials`);
+  if (!response.ok) throw new Error("Failed to load testimonials");
+  const data = await response.json();
+  return data.testimonials;
+}
+
+export async function listAdminTestimonials(secret: string): Promise<TestimonialPayload[]> {
+  const data = await request<{ testimonials: TestimonialPayload[] }>("/api/testimonials/admin", secret);
+  return data.testimonials;
+}
+
+export function createTestimonial(secret: string, testimonial: TestimonialPayload) {
+  return request<TestimonialPayload>("/api/testimonials", secret, {
+    method: "POST",
+    body: JSON.stringify(testimonial),
+  });
+}
+
+export function updateTestimonial(secret: string, id: number, testimonial: TestimonialPayload) {
+  return request<TestimonialPayload>(`/api/testimonials/${id}`, secret, {
+    method: "PUT",
+    body: JSON.stringify(testimonial),
+  });
+}
+
+export function deleteTestimonial(secret: string, id: number) {
+  return request<{ deleted: TestimonialPayload }>(`/api/testimonials/${id}`, secret, {
+    method: "DELETE",
+  });
 }

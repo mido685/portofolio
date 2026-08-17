@@ -66,6 +66,25 @@ def init_db() -> None:
         cur.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_email TEXT;")
         cur.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT FALSE;")
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS testimonials (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                role TEXT,
+                quote TEXT NOT NULL,
+                rating INTEGER NOT NULL DEFAULT 5,
+                approved BOOLEAN NOT NULL DEFAULT TRUE,
+                display_order INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        """)
+        cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS role TEXT;")
+        cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS rating INTEGER NOT NULL DEFAULT 5;")
+        cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT TRUE;")
+        cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;")
+        cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();")
+
         conn.commit()
         print("Database initialized successfully.")
 

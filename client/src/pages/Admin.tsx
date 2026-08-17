@@ -28,22 +28,28 @@ import {
   CommentPayload,
   createArticle,
   createProject,
+  createTestimonial,
   deleteArticle,
   deleteComment,
   deleteProject,
+  deleteTestimonial,
   isAdminAuthError,
   listArticles,
   listComments,
+  listAdminTestimonials,
   listProjects,
   ProjectPayload,
+  TestimonialPayload,
   updateArticle,
   updateCommentStatus,
   updateProject,
+  updateTestimonial,
   uploadArticleCoverImage,
+  uploadProjectImage,
   verifyAdminSecret,
 } from "@/lib/adminApi";
 
-type AdminSection = "projects" | "articles" | "comments";
+type AdminSection = "projects" | "articles" | "comments" | "testimonials";
 
 const emptyProject: ProjectPayload = {
   slug: "",
@@ -68,6 +74,15 @@ const emptyArticle: ArticlePayload = {
   content: "",
   cover_image_url: "",
   published: false,
+};
+
+const emptyTestimonial: TestimonialPayload = {
+  name: "",
+  role: "",
+  quote: "",
+  rating: 5,
+  approved: true,
+  display_order: 0,
 };
 
 function listToText(values: string[] | null | undefined) {
@@ -104,10 +119,13 @@ export default function Admin() {
   const [projects, setProjects] = useState<ProjectPayload[]>([]);
   const [articles, setArticles] = useState<ArticlePayload[]>([]);
   const [comments, setComments] = useState<CommentPayload[]>([]);
+  const [testimonials, setTestimonials] = useState<TestimonialPayload[]>([]);
   const [selectedProjectSlug, setSelectedProjectSlug] = useState("new");
   const [selectedArticleSlug, setSelectedArticleSlug] = useState("new");
+  const [selectedTestimonialId, setSelectedTestimonialId] = useState<number | "new">("new");
   const [projectDraft, setProjectDraft] = useState<ProjectPayload>(emptyProject);
   const [articleDraft, setArticleDraft] = useState<ArticlePayload>(emptyArticle);
+  const [testimonialDraft, setTestimonialDraft] = useState<TestimonialPayload>(emptyTestimonial);
   const [techText, setTechText] = useState("");
   const [enterpriseText, setEnterpriseText] = useState("");
   const [imagesText, setImagesText] = useState("");
@@ -115,6 +133,7 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
+  const projectImageInputRef = useRef<HTMLInputElement>(null);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.slug === selectedProjectSlug),
@@ -124,14 +143,13 @@ export default function Admin() {
     () => articles.find((article) => article.slug === selectedArticleSlug),
     [articles, selectedArticleSlug],
   );
-
-  const averageStars =
-    projects.length > 0
-      ? (projects.reduce((total, project) => total + Number(project.stars || 0), 0) / projects.length).toFixed(1)
-      : "0.0";
+  const selectedTestimonial = useMemo(
+    () => testimonials.find((testimonial) => testimonial.id === selectedTestimonialId),
+    [testimonials, selectedTestimonialId],
+  );
 
   async function loadAll() {
-    await Promise.all([loadProjects(), loadArticles(), secret ? loadComments() : Promise.resolve()]);
+    await Promise.all([loadProjects(), loadArticles(), loadTestimonials(), secret ? loadComments() : Promise.resolve()]);
   }
 
   function lockAdmin(message = "Invalid admin secret") {
@@ -141,6 +159,7 @@ export default function Admin() {
     setProjects([]);
     setArticles([]);
     setComments([]);
+    setTestimonials([]);
     setStatus("");
     setError(message);
   }
@@ -172,6 +191,16 @@ export default function Admin() {
       const message = err instanceof Error ? err.message : "Failed to load comments.";
       if (isAdminAuthError(err)) lockAdmin(message);
       else setError(message);
+    }
+  }
+
+  async function loadTestimonials() {
+    try {
+      setTestimonials(secret ? await listAdminTestimonials(secret) : []);
+      setStatus("Testimonials synced.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to load testimonials.");
     }
   }
 
@@ -219,6 +248,10 @@ export default function Admin() {
     setArticleDraft(selectedArticle ?? emptyArticle);
   }, [selectedArticle]);
 
+  useEffect(() => {
+    setTestimonialDraft(selectedTestimonial ?? emptyTestimonial);
+  }, [selectedTestimonial]);
+
   async function signIn(event: FormEvent) {
     event.preventDefault();
     const value = secretInput.trim();
@@ -250,6 +283,10 @@ export default function Admin() {
 
   function setArticleField<K extends keyof ArticlePayload>(key: K, value: ArticlePayload[K]) {
     setArticleDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function setTestimonialField<K extends keyof TestimonialPayload>(key: K, value: TestimonialPayload[K]) {
+    setTestimonialDraft((current) => ({ ...current, [key]: value }));
   }
 
   async function saveProject(event: FormEvent) {
@@ -302,6 +339,28 @@ export default function Admin() {
     } catch (err) {
       if (isAdminAuthError(err)) lockAdmin(err.message);
       else setError(err instanceof Error ? err.message : "Failed to delete project.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function uploadProjectCover(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || selectedProjectSlug === "new") return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      const result = await uploadProjectImage(secret, selectedProjectSlug, file);
+      setProjectField("image_url", result.imageUrl);
+      setImagesText(result.imageUrl);
+      await loadProjects();
+      setStatus("Project image uploaded.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to upload project image.");
     } finally {
       setBusy(false);
     }
@@ -372,6 +431,55 @@ export default function Admin() {
     } catch (err) {
       if (isAdminAuthError(err)) lockAdmin(err.message);
       else setError(err instanceof Error ? err.message : "Failed to upload cover image.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveTestimonial(event: FormEvent) {
+    event.preventDefault();
+    const testimonial: TestimonialPayload = {
+      ...testimonialDraft,
+      name: testimonialDraft.name.trim(),
+      role: testimonialDraft.role?.trim() || null,
+      quote: testimonialDraft.quote.trim(),
+      rating: Math.max(0, Math.min(5, Number(testimonialDraft.rating) || 0)),
+      approved: Boolean(testimonialDraft.approved),
+      display_order: Number(testimonialDraft.display_order) || 0,
+    };
+
+    setBusy(true);
+    setError("");
+
+    try {
+      const saved =
+        selectedTestimonialId === "new"
+          ? await createTestimonial(secret, testimonial)
+          : await updateTestimonial(secret, selectedTestimonialId, testimonial);
+      await loadTestimonials();
+      setSelectedTestimonialId(saved.id ?? "new");
+      setStatus(`Saved testimonial from "${saved.name}".`);
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to save testimonial.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeTestimonial() {
+    if (selectedTestimonialId === "new" || !confirm("Delete this testimonial permanently?")) return;
+    setBusy(true);
+    setError("");
+
+    try {
+      await deleteTestimonial(secret, selectedTestimonialId);
+      await loadTestimonials();
+      setSelectedTestimonialId("new");
+      setStatus("Testimonial deleted.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to delete testimonial.");
     } finally {
       setBusy(false);
     }
@@ -477,7 +585,7 @@ export default function Admin() {
             { icon: Layers3, label: "Projects", value: String(projects.length) },
             { icon: FileText, label: "Articles", value: String(articles.length) },
             { icon: MessageSquare, label: "Pending", value: String(comments.filter((comment) => !comment.approved).length) },
-            { icon: Sparkles, label: "Avg strength", value: averageStars },
+            { icon: Sparkles, label: "Testimonials", value: String(testimonials.filter((testimonial) => testimonial.approved).length) },
           ].map((item) => (
             <div key={item.label} className="rounded-lg border border-primary/15 bg-card p-4">
               <item.icon className="mb-3 h-5 w-5 text-primary" />
@@ -492,6 +600,7 @@ export default function Admin() {
             { id: "projects" as const, icon: Layers3, label: "Projects" },
             { id: "articles" as const, icon: FileText, label: "Articles" },
             { id: "comments" as const, icon: MessageSquare, label: "Comments" },
+            { id: "testimonials" as const, icon: Sparkles, label: "Testimonials" },
           ].map((item) => (
             <Button key={item.id} type="button" variant={section === item.id ? "default" : "secondary"} onClick={() => setSection(item.id)}>
               <item.icon size={16} />
@@ -557,10 +666,18 @@ export default function Admin() {
                     <span>Strength rating</span>
                     <Input type="number" min={0} max={5} value={projectDraft.stars} onChange={(event) => setProjectField("stars", Number(event.target.value))} />
                   </label>
-                  <label className="space-y-2 text-sm">
-                    <span>Cover image URL</span>
-                    <Input value={projectDraft.image_url ?? ""} onChange={(event) => setProjectField("image_url", event.target.value)} />
-                  </label>
+                  <div className="space-y-2 text-sm">
+                    <span>Cover image</span>
+                    <div className="flex gap-2">
+                      <Input value={projectDraft.image_url ?? ""} onChange={(event) => setProjectField("image_url", event.target.value)} placeholder="Paste image URL or upload a file" />
+                      <input ref={projectImageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadProjectCover} className="hidden" />
+                      <Button type="button" variant="secondary" onClick={() => projectImageInputRef.current?.click()} disabled={busy || selectedProjectSlug === "new"}>
+                        {busy ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                        Upload
+                      </Button>
+                    </div>
+                    {selectedProjectSlug === "new" && <FieldHint>Save the project once before uploading a cover image.</FieldHint>}
+                  </div>
                 </div>
 
                 <label className="mt-4 block space-y-2 text-sm">
@@ -736,6 +853,78 @@ export default function Admin() {
                       Delete
                     </Button>
                   </>
+                )}
+              </section>
+            </form>
+          </div>
+        )}
+
+        {section === "testimonials" && (
+          <div className="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+            <aside className="h-fit rounded-lg border border-border bg-card p-3">
+              <Button type="button" className="w-full" onClick={() => setSelectedTestimonialId("new")}>
+                <Plus size={16} />
+                New Testimonial
+              </Button>
+              <div className="mt-4 space-y-2">
+                {testimonials.map((testimonial) => (
+                  <button key={testimonial.id} type="button" onClick={() => setSelectedTestimonialId(testimonial.id ?? "new")} className={`w-full rounded-md border px-3 py-3 text-left text-sm transition-colors ${selectedTestimonialId === testimonial.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 hover:bg-secondary"}`}>
+                    <span className="block font-medium">{testimonial.name}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{testimonial.role || "No role added"}</span>
+                    <span className="mt-2 block text-xs text-muted-foreground">{testimonial.approved ? "Visible" : "Hidden"} / {testimonial.rating} stars</span>
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            <form onSubmit={saveTestimonial} className="space-y-5">
+              <section className="rounded-lg border border-border bg-card p-5">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Testimonial Editor</h2>
+                    <FieldHint>Publish client reviews and portfolio testimonials.</FieldHint>
+                  </div>
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={testimonialDraft.approved} onChange={(event) => setTestimonialField("approved", event.target.checked)} />
+                    Visible
+                  </label>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2 text-sm">
+                    <span>Name</span>
+                    <Input value={testimonialDraft.name} onChange={(event) => setTestimonialField("name", event.target.value)} required />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Role / Company</span>
+                    <Input value={testimonialDraft.role ?? ""} onChange={(event) => setTestimonialField("role", event.target.value)} />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Rating</span>
+                    <Input type="number" min={0} max={5} value={testimonialDraft.rating} onChange={(event) => setTestimonialField("rating", Number(event.target.value))} />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Display order</span>
+                    <Input type="number" value={testimonialDraft.display_order} onChange={(event) => setTestimonialField("display_order", Number(event.target.value))} />
+                  </label>
+                </div>
+
+                <label className="mt-4 block space-y-2 text-sm">
+                  <span>Review</span>
+                  <Textarea value={testimonialDraft.quote} onChange={(event) => setTestimonialField("quote", event.target.value)} rows={7} required />
+                </label>
+              </section>
+
+              <section className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-5">
+                <Button type="submit" disabled={busy}>
+                  {busy ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                  Save Testimonial
+                </Button>
+                {selectedTestimonialId !== "new" && (
+                  <Button type="button" variant="destructive" onClick={removeTestimonial} disabled={busy}>
+                    <Trash2 size={16} />
+                    Delete
+                  </Button>
                 )}
               </section>
             </form>
