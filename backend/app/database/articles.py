@@ -162,17 +162,23 @@ def get_comments(article_slug: str | None = None, approved_only: bool = True):
         conn.close()
 
 
-def insert_comment(article_slug: str, author_name: str, author_email: str = None, body: str = None):
+def insert_comment(
+    article_slug: str,
+    author_name: str,
+    author_email: str = None,
+    body: str = None,
+    rating: int = 0,
+):
     conn = get_connection()
     try:
         cur = dict_cursor(conn)
         cur.execute(
             """
-            INSERT INTO comments (article_slug, author_name, author_email, body)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO comments (article_slug, author_name, author_email, body, rating)
+            VALUES (%s, %s, %s, %s, %s)
             RETURNING *
             """,
-            (article_slug, author_name, author_email, body),
+            (article_slug, author_name, author_email, body, rating),
         )
         row = cur.fetchone()
         conn.commit()

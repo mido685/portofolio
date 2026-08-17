@@ -59,11 +59,13 @@ def init_db() -> None:
                 author_name TEXT NOT NULL,
                 author_email TEXT,
                 body TEXT NOT NULL,
+                rating INTEGER NOT NULL DEFAULT 0,
                 approved BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW()
             );
         """)
         cur.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_email TEXT;")
+        cur.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS rating INTEGER NOT NULL DEFAULT 0;")
         cur.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT FALSE;")
 
         cur.execute("""
@@ -72,7 +74,7 @@ def init_db() -> None:
                 name TEXT NOT NULL,
                 role TEXT,
                 quote TEXT NOT NULL,
-                rating INTEGER NOT NULL DEFAULT 5,
+                rating INTEGER NOT NULL DEFAULT 0,
                 approved BOOLEAN NOT NULL DEFAULT TRUE,
                 display_order INTEGER NOT NULL DEFAULT 0,
                 created_at TIMESTAMP DEFAULT NOW(),
@@ -80,7 +82,7 @@ def init_db() -> None:
             );
         """)
         cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS role TEXT;")
-        cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS rating INTEGER NOT NULL DEFAULT 5;")
+        cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS rating INTEGER NOT NULL DEFAULT 0;")
         cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT TRUE;")
         cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;")
         cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();")
