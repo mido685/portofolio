@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  Upload,
   XCircle,
 } from "lucide-react";
 import { Link } from "wouter";
@@ -38,6 +39,7 @@ import {
   updateArticle,
   updateCommentStatus,
   updateProject,
+  uploadArticleCoverImage,
   verifyAdminSecret,
 } from "@/lib/adminApi";
 
@@ -112,6 +114,7 @@ export default function Admin() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const articleCoverInputRef = useRef<HTMLInputElement>(null);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.slug === selectedProjectSlug),
@@ -348,6 +351,27 @@ export default function Admin() {
     } catch (err) {
       if (isAdminAuthError(err)) lockAdmin(err.message);
       else setError(err instanceof Error ? err.message : "Failed to delete article.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function uploadArticleCover(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || selectedArticleSlug === "new") return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      const result = await uploadArticleCoverImage(secret, selectedArticleSlug, file);
+      setArticleField("cover_image_url", result.imageUrl);
+      await loadArticles();
+      setStatus("Cover image uploaded.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to upload cover image.");
     } finally {
       setBusy(false);
     }
@@ -667,10 +691,23 @@ export default function Admin() {
                     <span>Category</span>
                     <Input value={articleDraft.category} onChange={(event) => setArticleField("category", event.target.value)} />
                   </label>
-                  <label className="space-y-2 text-sm">
-                    <span>Cover image URL</span>
-                    <Input value={articleDraft.cover_image_url ?? ""} onChange={(event) => setArticleField("cover_image_url", event.target.value)} />
-                  </label>
+                  <div className="space-y-2 text-sm">
+                    <span>Cover image</span>
+                    <div className="flex gap-2">
+                      <Input value={articleDraft.cover_image_url ?? ""} onChange={(event) => setArticleField("cover_image_url", event.target.value)} placeholder="Paste image URL or upload a file" />
+                      <input ref={articleCoverInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadArticleCover} className="hidden" />
+                      <Button type="button" variant="secondary" onClick={() => articleCoverInputRef.current?.click()} disabled={busy || selectedArticleSlug === "new"}>
+                        {busy ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                        Upload
+                      </Button>
+                    </div>
+                    {selectedArticleSlug === "new" && <FieldHint>Save the article once before uploading a cover image.</FieldHint>}
+                    {articleDraft.cover_image_url && (
+                      <div className="overflow-hidden rounded-md border border-primary/20 bg-secondary">
+                        <img src={articleDraft.cover_image_url} alt="" className="aspect-video w-full object-cover" />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <label className="mt-4 block space-y-2 text-sm">
                   <span>Excerpt</span>

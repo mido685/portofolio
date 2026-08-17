@@ -128,6 +128,20 @@ export function deleteArticle(secret: string, slug: string) {
   });
 }
 
+export function uploadArticleCoverImage(secret: string, slug: string, file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  return request<{ imageUrl: string; article: ArticlePayload }>(
+    `/api/articles/${slug}/cover`,
+    secret,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+}
+
 export async function listArticleComments(slug: string): Promise<CommentPayload[]> {
   const response = await fetch(`${API_BASE}/api/articles/${slug}/comments`);
   if (!response.ok) throw new Error("Failed to load comments");

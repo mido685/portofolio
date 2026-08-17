@@ -1,5 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import uuid
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
+import vercel_blob
 
 from app.core.auth import require_admin
 from app.database.articles import (
@@ -11,10 +15,14 @@ from app.database.articles import (
     insert_article,
     insert_comment,
     update_article,
+    update_article_cover_image,
     update_comment_status,
 )
 
 router = APIRouter(tags=["articles"])
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
 
 class ArticlePayload(BaseModel):
@@ -79,6 +87,31 @@ def remove_article(slug: str):
 @router.get("/admin/session", dependencies=[Depends(require_admin)])
 def verify_admin_session():
     return {"ok": True}
+
+
+@router.post("/articles/{slug}/cover", dependencies=[Depends(require_admin)])
+async def upload_article_cover(slug: str, image: UploadFile = File(...)):
+    if not get_article_by_slug(slug, include_unpublished=True):
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    if image.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+
+    contents = await image.read()
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large (max 5MB)")
+
+    ext = Path(image.filename).suffix
+    blob_path = f"articles/{slug}-{uuid.uuid4().hex}{ext}"
+
+    try:
+        blob_result = vercel_blob.put(blob_path, contents, {"access": "public"})
+        image_url = blob_result["url"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Blob upload failed: {str(e)}")
+
+    updated = update_article_cover_image(slug, image_url)
+    return {"imageUrl": image_url, "article": updated}
 
 
 @router.get("/articles/{slug}/comments")

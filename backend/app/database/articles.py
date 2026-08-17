@@ -101,6 +101,30 @@ def update_article(
         conn.close()
 
 
+def update_article_cover_image(slug: str, cover_image_url: str):
+    conn = get_connection()
+    try:
+        cur = dict_cursor(conn)
+        cur.execute(
+            """
+            UPDATE articles
+            SET cover_image_url = %s,
+                updated_at = NOW()
+            WHERE slug = %s
+            RETURNING *
+            """,
+            (cover_image_url, slug),
+        )
+        row = cur.fetchone()
+        conn.commit()
+        return row
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def delete_article(slug: str):
     conn = get_connection()
     try:
