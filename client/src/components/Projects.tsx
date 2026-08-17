@@ -1,66 +1,73 @@
 import { motion } from "framer-motion";
-import { Link } from "wouter";
-import { Github, ExternalLink, BarChart3, GitBranch } from "lucide-react";
-import { useState, useEffect } from "react";
-import { projects as localProjects } from "@/data/projects";
-import { API_BASE } from "@/lib/apiBase";
+import { Star } from "lucide-react";
+import { useEffect, useState } from "react";
+import { listTestimonials, TestimonialPayload } from "@/lib/adminApi";
 
-type Project = {
-  slug: string;
-  title: string;
-  description: string;
-  image_url: string | null;
-  github_url: string;
-  demo_url: string;
-  stars: number;
-  tech: string[];
-  problem?: string;
-  solution?: string;
-  enterprise?: string[];
-};
+const fallbackTestimonials = [
+  {
+    quote:
+      "Placeholder for a verified client or collaborator quote about delivery quality, communication, and production mindset.",
+    name: "Verified collaborator",
+    role: "Add company / role",
+    status: "Pending quote",
+    initials: "VC",
+  },
+  {
+    quote:
+      "Use this space for a technical reviewer who can speak to code quality, architecture, and problem solving.",
+    name: "Technical reviewer",
+    role: "Senior engineer / mentor",
+    status: "Pending quote",
+    initials: "TR",
+  },
+  {
+    quote:
+      "Use this space for a product stakeholder who can speak to business value and user impact.",
+    name: "Product stakeholder",
+    role: "Founder / operator",
+    status: "Pending quote",
+    initials: "PS",
+  },
+];
 
-const fallbackProjects: Project[] = localProjects.map((project) => ({
-  slug: project.slug,
-  title: project.title,
-  description: project.description,
-  image_url: project.image,
-  github_url: project.github,
-  demo_url: project.demo,
-  stars: project.stars,
-  tech: project.tech,
-  problem: project.problem,
-  solution: project.solution,
-  enterprise: project.enterprise,
-}));
+function initialsFor(name: string) {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
-function StarRating({ count }: { count: number }) {
+function StarRow({ rating }: { rating: number }) {
+  const value = Math.max(0, Math.min(5, Math.round(rating)));
   return (
-    <div className="flex gap-1" aria-label={`${count} out of 5 project strength`}>
+    <div className="mt-1.5 flex items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className={`text-sm ${i < count ? "text-yellow-400" : "text-gray-600"}`}>
-          *
-        </span>
+        <Star
+          key={i}
+          size={13}
+          className={i < value ? "fill-[#f5c518] text-[#f5c518]" : "fill-transparent text-gray-600"}
+        />
       ))}
     </div>
   );
 }
 
-export default function Projects() {
-  const [projects, setProjects] = useState<Project[]>(fallbackProjects);
+export default function Testimonials() {
+  const [testimonials, setTestimonials] = useState<TestimonialPayload[]>([]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/projects`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data.projects) && data.projects.length > 0) {
-          setProjects(data.projects);
-        }
-      })
-      .catch(() => setProjects(fallbackProjects));
+    listTestimonials()
+      .then(setTestimonials)
+      .catch(() => setTestimonials([]));
   }, []);
 
+  const visibleTestimonials = testimonials.length > 0 ? testimonials : fallbackTestimonials;
+  const hasLiveTestimonials = testimonials.length > 0;
+
   return (
-    <section id="projects" className="py-24 bg-[#0d1117]">
+    <section id="testimonials" className="py-24 bg-[#0a0e1a]">
       <div className="container max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -69,101 +76,61 @@ export default function Projects() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="text-xs font-mono-data uppercase tracking-[0.25em] text-gray-500 mb-3">
-            Case Studies
-          </p>
           <h2 className="text-3xl md:text-4xl font-bold text-[#00d4aa]">
-            Featured AI Systems
+            Testimonials
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto mt-4 text-sm leading-relaxed">
-            Each project is framed as an engineering case study: problem, architecture, role,
-            decisions, impact, and lessons learned.
+            {hasLiveTestimonials
+              ? "Client feedback and collaborator notes from recent portfolio work."
+              : "No fake praise. These are intentionally marked placeholders until real references are collected."}
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {projects.map((project, i) => (
-            <motion.article
-              key={project.slug}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.15 }}
-              className="bg-[#111827] border border-[#00d4aa]/20 rounded-lg overflow-hidden card-glow hover:border-[#00d4aa]/40 transition-all duration-300 group flex flex-col"
-            >
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={project.image_url || "/placeholder.png"}
-                  alt={`${project.title} interface screenshot`}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          {visibleTestimonials.map((t, i) => {
+            const rating = "rating" in t ? Number(t.rating) || 0 : 0;
+            const isPending = "status" in t;
+
+            return (
+              <motion.div
+                key={`${t.name}-${i}`}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="group relative overflow-hidden bg-[#111827] border border-[#00d4aa]/20 rounded-lg p-6 card-glow hover:border-[#00d4aa]/40 transition-all duration-300"
+              >
+                {/* mirror / shine sweep */}
+                <div
+                  className="pointer-events-none absolute inset-0 -translate-x-[120%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[120%]"
+                  aria-hidden="true"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#111827] to-transparent" />
-                <div className="absolute left-4 bottom-4">
-                  <StarRating count={project.stars} />
-                </div>
-              </div>
 
-              <div className="p-5 flex flex-col flex-1">
-                <h3 className="text-[#00d4aa] font-bold text-lg mb-3">{project.title}</h3>
-
-                <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-4">
-                  {project.description}
-                </p>
-
-                <div className="rounded-lg border border-[#00d4aa]/10 bg-[#00d4aa]/5 p-3 mb-4">
-                  <div className="flex items-center gap-2 text-[#00d4aa] text-xs font-mono-data uppercase tracking-wide mb-2">
-                    <GitBranch size={14} />
-                    Architecture signal
-                  </div>
-                  <p className="text-gray-500 text-xs leading-relaxed">
-                    {project.solution || "Model/API/frontend architecture documented in the case study."}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {project.tech?.slice(0, 5).map((t) => (
-                    <span
-                      key={t}
-                      className="px-2.5 py-1 text-xs bg-[#00d4aa]/10 text-[#00d4aa] border border-[#00d4aa]/20 rounded-full font-mono-data"
-                    >
-                      {t}
+                <div className="relative z-10">
+                  {isPending && (
+                    <span className="mb-4 inline-block text-[10px] font-mono-data uppercase tracking-wider text-[#00d4aa] bg-[#00d4aa]/10 px-2 py-1 rounded">
+                      {(t as { status: string }).status}
                     </span>
-                  ))}
+                  )}
+
+                  <p className="text-gray-400 text-sm italic leading-relaxed">
+                    &quot;{t.quote}&quot;
+                  </p>
+
+                  <div className="mt-6 flex items-center gap-3">
+                    <div className="w-10 h-10 shrink-0 rounded-full bg-[#00d4aa]/20 flex items-center justify-center text-[#00d4aa] font-bold text-sm">
+                      {"initials" in t ? t.initials : initialsFor(t.name)}
+                    </div>
+                    <div>
+                      <p className="text-[#00d4aa] text-sm font-semibold">{t.name}</p>
+                      <p className="text-gray-500 text-xs">{t.role}</p>
+                      {!isPending && <StarRow rating={rating} />}
+                    </div>
+                  </div>
                 </div>
-
-                <div className="mt-auto grid grid-cols-3 gap-2">
-                  <Link
-                    href={`/projects/${project.slug}`}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#00d4aa]/10 text-[#00d4aa] text-xs font-medium rounded-md hover:bg-[#00d4aa]/20 transition-all border border-[#00d4aa]/20"
-                  >
-                    <BarChart3 size={14} />
-                    Case
-                  </Link>
-
-                  <a
-                    href={project.github_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-700/50 text-gray-300 text-xs font-medium rounded-md hover:bg-gray-600/50 transition-all"
-                  >
-                    <Github size={14} />
-                    Code
-                  </a>
-
-                  <a
-                    href={project.demo_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#00d4aa]/10 text-[#00d4aa] text-xs font-medium rounded-md hover:bg-[#00d4aa]/20 transition-all border border-[#00d4aa]/20"
-                  >
-                    Demo
-                    <ExternalLink size={12} />
-                  </a>
-                </div>
-              </div>
-            </motion.article>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
