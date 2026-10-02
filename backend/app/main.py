@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database.schema import init_db
@@ -10,13 +12,24 @@ def create_app() -> FastAPI:
     application = FastAPI(title="Stark Portfolio API", version="1.0.0")
     init_db()
 
+    @application.get("/health")
+    def health_check():
+        return {"status": "ok"}
+
+    frontend_origins = [
+        origin.strip().rstrip("/")
+        for origin in os.getenv("FRONTEND_ORIGINS", "").split(",")
+        if origin.strip()
+    ]
+
     application.add_middleware(
         CORSMiddleware,
         allow_origins=[
             "http://localhost:5173",
             "http://127.0.0.1:5173",
+            *frontend_origins,
         ],
-        allow_origin_regex=r"https://portofolio-.*\.vercel\.app",
+        allow_origin_regex=r"https://(?:portofolio|portfolio)-.*\.vercel\.app",
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -26,3 +39,6 @@ def create_app() -> FastAPI:
     application.include_router(testimonials_router.router, prefix="/api")
 
     return application
+
+
+app = create_app()
