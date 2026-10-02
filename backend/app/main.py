@@ -23,16 +23,18 @@ def create_app() -> FastAPI:
     ]
 
     application.add_middleware(
-        CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            *frontend_origins,
-        ],
-        allow_origin_regex=r"https://(?:portofolio|portfolio)-.*\.vercel\.app",
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://starkai.us",
+        "https://www.starkai.us",
+        *frontend_origins,
+    ],
+    allow_origin_regex=r"https://(?:portofolio|portfolio)-.*\.vercel\.app",
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
     application.include_router(articles_router.router, prefix="/api")
     application.include_router(projects_router.router, prefix="/api")
