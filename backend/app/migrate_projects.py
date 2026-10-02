@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from database.connection import get_connection
+from app.database.connection import get_connection
 PROJECTS = [
     {
         "slug": "stark-medical-tokenizer",
