@@ -1,5 +1,6 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Award,
   ArrowDown,
   ArrowLeft,
   ArrowUp,
@@ -27,32 +28,38 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ADMIN_SECRET_KEY,
   ArticlePayload,
+  CertificationPayload,
   CommentPayload,
   createArticle,
+  createCertification,
   createProject,
   createTestimonial,
   deleteArticle,
+  deleteCertification,
   deleteComment,
   deleteProject,
   deleteTestimonial,
   isAdminAuthError,
   listArticles,
+  listCertifications,
   listComments,
   listAdminTestimonials,
   listProjects,
   ProjectPayload,
   TestimonialPayload,
   updateArticle,
+  updateCertification,
   updateCommentStatus,
   updateProject,
   updateTestimonial,
   uploadArticleCoverImage,
+  uploadCertificationFile,
   uploadProjectImage,
   uploadProjectImages,
   verifyAdminSecret,
 } from "@/lib/adminApi";
 
-type AdminSection = "projects" | "articles" | "comments" | "testimonials";
+type AdminSection = "projects" | "articles" | "certifications" | "comments" | "testimonials";
 
 const emptyProject: ProjectPayload = {
   slug: "",
@@ -86,6 +93,18 @@ const emptyTestimonial: TestimonialPayload = {
   rating: 5,
   approved: true,
   display_order: 0,
+};
+
+const emptyCertification: CertificationPayload = {
+  category: "certification",
+  title: "",
+  issuer: "",
+  issue_date: "",
+  credential_id: "",
+  credential_url: "",
+  file_url: "",
+  description: "",
+  published: false,
 };
 
 const MAX_GALLERY_IMAGES = 10;
@@ -127,12 +146,15 @@ export default function Admin() {
   const [articles, setArticles] = useState<ArticlePayload[]>([]);
   const [comments, setComments] = useState<CommentPayload[]>([]);
   const [testimonials, setTestimonials] = useState<TestimonialPayload[]>([]);
+  const [certifications, setCertifications] = useState<CertificationPayload[]>([]);
   const [selectedProjectSlug, setSelectedProjectSlug] = useState("new");
   const [selectedArticleSlug, setSelectedArticleSlug] = useState("new");
   const [selectedTestimonialId, setSelectedTestimonialId] = useState<number | "new">("new");
+  const [selectedCertificationId, setSelectedCertificationId] = useState<number | "new">("new");
   const [projectDraft, setProjectDraft] = useState<ProjectPayload>(emptyProject);
   const [articleDraft, setArticleDraft] = useState<ArticlePayload>(emptyArticle);
   const [testimonialDraft, setTestimonialDraft] = useState<TestimonialPayload>(emptyTestimonial);
+  const [certificationDraft, setCertificationDraft] = useState<CertificationPayload>(emptyCertification);
   const [techText, setTechText] = useState("");
   const [enterpriseText, setEnterpriseText] = useState("");
   const [galleryDropActive, setGalleryDropActive] = useState(false);
@@ -143,6 +165,7 @@ export default function Admin() {
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
   const projectImageInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const certificationFileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.slug === selectedProjectSlug),
@@ -156,9 +179,13 @@ export default function Admin() {
     () => testimonials.find((testimonial) => testimonial.id === selectedTestimonialId),
     [testimonials, selectedTestimonialId],
   );
+  const selectedCertification = useMemo(
+    () => certifications.find((certification) => certification.id === selectedCertificationId),
+    [certifications, selectedCertificationId],
+  );
 
   async function loadAll() {
-    await Promise.all([loadProjects(), loadArticles(), loadTestimonials(), secret ? loadComments() : Promise.resolve()]);
+    await Promise.all([loadProjects(), loadArticles(), loadTestimonials(), loadCertifications(), secret ? loadComments() : Promise.resolve()]);
   }
 
   function lockAdmin(message = "Invalid admin secret") {
@@ -169,6 +196,7 @@ export default function Admin() {
     setArticles([]);
     setComments([]);
     setTestimonials([]);
+    setCertifications([]);
     setStatus("");
     setError(message);
   }
@@ -210,6 +238,15 @@ export default function Admin() {
     } catch (err) {
       if (isAdminAuthError(err)) lockAdmin(err.message);
       else setError(err instanceof Error ? err.message : "Failed to load testimonials.");
+    }
+  }
+
+  async function loadCertifications() {
+    try {
+      setCertifications(await listCertifications(true, secret));
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to load certifications.");
     }
   }
 
@@ -264,6 +301,10 @@ export default function Admin() {
     setTestimonialDraft(selectedTestimonial ?? emptyTestimonial);
   }, [selectedTestimonial]);
 
+  useEffect(() => {
+    setCertificationDraft(selectedCertification ?? emptyCertification);
+  }, [selectedCertification]);
+
   async function signIn(event: FormEvent) {
     event.preventDefault();
     const value = secretInput.trim();
@@ -299,6 +340,10 @@ export default function Admin() {
 
   function setTestimonialField<K extends keyof TestimonialPayload>(key: K, value: TestimonialPayload[K]) {
     setTestimonialDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function setCertificationField<K extends keyof CertificationPayload>(key: K, value: CertificationPayload[K]) {
+    setCertificationDraft((current) => ({ ...current, [key]: value }));
   }
 
   async function saveProject(event: FormEvent) {
@@ -561,6 +606,82 @@ export default function Admin() {
     }
   }
 
+  async function saveCertification(event: FormEvent) {
+    event.preventDefault();
+    const certification: CertificationPayload = {
+      ...certificationDraft,
+      title: certificationDraft.title.trim(),
+      issuer: certificationDraft.issuer.trim(),
+      issue_date: certificationDraft.issue_date?.trim() || null,
+      credential_id: certificationDraft.credential_id?.trim() || null,
+      credential_url: certificationDraft.credential_url?.trim() || null,
+      file_url: certificationDraft.file_url?.trim() || null,
+      description: certificationDraft.description?.trim() || null,
+      published: Boolean(certificationDraft.published),
+    };
+
+    setBusy(true);
+    setError("");
+    try {
+      const saved = selectedCertificationId === "new"
+        ? await createCertification(secret, certification)
+        : await updateCertification(secret, selectedCertificationId, certification);
+      await loadCertifications();
+      setSelectedCertificationId(saved.id ?? "new");
+      setStatus(`Saved "${saved.title}".`);
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to save certification.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeCertification() {
+    if (selectedCertificationId === "new" || !confirm("Delete this credential permanently?")) return;
+    setBusy(true);
+    setError("");
+    try {
+      await deleteCertification(secret, selectedCertificationId);
+      await loadCertifications();
+      setSelectedCertificationId("new");
+      setStatus("Credential deleted.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to delete credential.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function uploadCertificationDocument(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || selectedCertificationId === "new") return;
+    if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type)) {
+      setError("Choose a JPG, PNG, WebP, or PDF document.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Certificate files must be 10 MB or smaller.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    try {
+      const saved = await uploadCertificationFile(secret, selectedCertificationId, file);
+      setCertificationDraft(saved);
+      await loadCertifications();
+      setStatus("Credential document uploaded.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to upload the credential document.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function moderateComment(id: number, approved: boolean) {
     setBusy(true);
     setError("");
@@ -641,7 +762,7 @@ export default function Admin() {
                 Back to site
               </Link>
               <h1 className="mt-2 text-3xl font-bold text-primary">Portfolio Control Center</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Projects, articles, and comment moderation in one dashboard.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Projects, articles, credentials, and comment moderation in one dashboard.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -656,10 +777,11 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
+        <div className="mt-6 grid gap-4 md:grid-cols-5">
           {[
             { icon: Layers3, label: "Projects", value: String(projects.length) },
             { icon: FileText, label: "Articles", value: String(articles.length) },
+            { icon: Award, label: "Credentials", value: String(certifications.length) },
             { icon: MessageSquare, label: "Pending", value: String(comments.filter((comment) => !comment.approved).length) },
             { icon: Sparkles, label: "Testimonials", value: String(testimonials.filter((testimonial) => testimonial.approved).length) },
           ].map((item) => (
@@ -675,6 +797,7 @@ export default function Admin() {
           {[
             { id: "projects" as const, icon: Layers3, label: "Projects" },
             { id: "articles" as const, icon: FileText, label: "Articles" },
+            { id: "certifications" as const, icon: Award, label: "Certifications" },
             { id: "comments" as const, icon: MessageSquare, label: "Comments" },
             { id: "testimonials" as const, icon: Sparkles, label: "Testimonials" },
           ].map((item) => (
@@ -1024,6 +1147,117 @@ export default function Admin() {
                       Delete
                     </Button>
                   </>
+                )}
+              </section>
+            </form>
+          </div>
+        )}
+
+        {section === "certifications" && (
+          <div className="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+            <aside className="h-fit rounded-lg border border-border bg-card p-3">
+              <Button type="button" className="w-full" onClick={() => setSelectedCertificationId("new")}>
+                <Plus size={16} />
+                New Credential
+              </Button>
+              <div className="mt-4 space-y-2">
+                {certifications.map((credential) => (
+                  <button
+                    key={credential.id}
+                    type="button"
+                    onClick={() => setSelectedCertificationId(credential.id ?? "new")}
+                    className={`w-full rounded-md border px-3 py-3 text-left text-sm transition-colors ${selectedCertificationId === credential.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 hover:bg-secondary"}`}
+                  >
+                    <span className="block font-medium">{credential.title}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{credential.issuer}</span>
+                    <span className="mt-2 block text-xs text-muted-foreground">{credential.category === "course" ? "Course" : "Certification"} / {credential.published ? "Published" : "Draft"}</span>
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            <form onSubmit={saveCertification} className="space-y-5">
+              <section className="rounded-lg border border-border bg-card p-5">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Credential Editor</h2>
+                    <FieldHint>Keep formal certifications separate from courses and training.</FieldHint>
+                  </div>
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={certificationDraft.published} onChange={(event) => setCertificationField("published", event.target.checked)} />
+                    Published
+                  </label>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2 text-sm">
+                    <span>Type</span>
+                    <select
+                      value={certificationDraft.category}
+                      onChange={(event) => setCertificationField("category", event.target.value as CertificationPayload["category"])}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="certification">Certification</option>
+                      <option value="course">Training / Course</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Title</span>
+                    <Input value={certificationDraft.title} onChange={(event) => setCertificationField("title", event.target.value)} required />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Issuer</span>
+                    <Input value={certificationDraft.issuer} onChange={(event) => setCertificationField("issuer", event.target.value)} required />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Issue date</span>
+                    <Input type="date" value={certificationDraft.issue_date ?? ""} onChange={(event) => setCertificationField("issue_date", event.target.value)} />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Credential ID</span>
+                    <Input value={certificationDraft.credential_id ?? ""} onChange={(event) => setCertificationField("credential_id", event.target.value)} />
+                  </label>
+                  <label className="space-y-2 text-sm">
+                    <span>Verification URL</span>
+                    <Input type="url" value={certificationDraft.credential_url ?? ""} onChange={(event) => setCertificationField("credential_url", event.target.value)} placeholder="https://" />
+                  </label>
+                </div>
+
+                <label className="mt-4 block space-y-2 text-sm">
+                  <span>Description</span>
+                  <Textarea value={certificationDraft.description ?? ""} onChange={(event) => setCertificationField("description", event.target.value)} rows={3} />
+                </label>
+
+                <div className="mt-4 space-y-2 text-sm">
+                  <span>Certificate image or PDF</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <input ref={certificationFileInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={uploadCertificationDocument} className="hidden" />
+                    <Button type="button" variant="secondary" onClick={() => certificationFileInputRef.current?.click()} disabled={busy || selectedCertificationId === "new"}>
+                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload size={16} />}
+                      Upload certificate
+                    </Button>
+                    <FieldHint>JPG, PNG, WebP, or PDF. Up to 10 MB.</FieldHint>
+                  </div>
+                  {certificationDraft.file_url && (
+                    <a href={certificationDraft.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-primary hover:underline">
+                      <ExternalLink size={14} />
+                      Open uploaded document
+                    </a>
+                  )}
+                  {selectedCertificationId === "new" && <FieldHint>Save the credential first, then upload its document.</FieldHint>}
+                </div>
+              </section>
+
+              <section className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-5">
+                <Button type="submit" disabled={busy}>
+                  {busy ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                  Save Credential
+                </Button>
+                {selectedCertificationId !== "new" && (
+                  <Button type="button" variant="destructive" onClick={removeCertification} disabled={busy}>
+                    <Trash2 size={16} />
+                    Delete
+                  </Button>
                 )}
               </section>
             </form>

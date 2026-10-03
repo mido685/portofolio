@@ -51,6 +51,19 @@ export type TestimonialPayload = {
   updated_at?: string;
 };
 
+export type CertificationPayload = {
+  id?: number;
+  category: "certification" | "course";
+  title: string;
+  issuer: string;
+  issue_date: string | null;
+  credential_id: string | null;
+  credential_url: string | null;
+  file_url: string | null;
+  description: string | null;
+  published: boolean;
+};
+
 export class AdminAuthError extends Error {
   constructor(message = "Invalid admin secret") {
     super(message);
@@ -235,6 +248,47 @@ export function uploadProjectImages(secret: string, slug: string, files: File[])
   files.forEach((file) => formData.append("images", file));
 
   return request<{ images: string[] }>(`/api/projects/${slug}/images`, secret, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function listCertifications(includeUnpublished = false, secret = ""): Promise<CertificationPayload[]> {
+  if (includeUnpublished) {
+    const data = await request<{ certifications: CertificationPayload[] }>("/api/certifications/admin", secret);
+    return data.certifications;
+  }
+
+  const response = await fetch(`${API_BASE}/api/certifications`);
+  if (!response.ok) throw new Error("Failed to load certifications");
+  const data = await response.json();
+  return data.certifications;
+}
+
+export function createCertification(secret: string, certification: CertificationPayload) {
+  return request<CertificationPayload>("/api/certifications", secret, {
+    method: "POST",
+    body: JSON.stringify(certification),
+  });
+}
+
+export function updateCertification(secret: string, id: number, certification: CertificationPayload) {
+  return request<CertificationPayload>(`/api/certifications/${id}`, secret, {
+    method: "PUT",
+    body: JSON.stringify(certification),
+  });
+}
+
+export function deleteCertification(secret: string, id: number) {
+  return request<{ deleted: CertificationPayload }>(`/api/certifications/${id}`, secret, {
+    method: "DELETE",
+  });
+}
+
+export function uploadCertificationFile(secret: string, id: number, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return request<CertificationPayload>(`/api/certifications/${id}/file`, secret, {
     method: "POST",
     body: formData,
   });

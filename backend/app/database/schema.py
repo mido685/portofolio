@@ -87,6 +87,24 @@ def init_db() -> None:
         cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;")
         cur.execute("ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();")
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS certifications (
+                id SERIAL PRIMARY KEY,
+                category TEXT NOT NULL DEFAULT 'certification'
+                    CHECK (category IN ('certification', 'course')),
+                title TEXT NOT NULL,
+                issuer TEXT NOT NULL,
+                issue_date DATE,
+                credential_id TEXT,
+                credential_url TEXT,
+                file_url TEXT,
+                description TEXT,
+                published BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        """)
+
         conn.commit()
         print("Database initialized successfully.")
 
