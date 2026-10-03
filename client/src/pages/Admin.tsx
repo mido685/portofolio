@@ -907,7 +907,7 @@ export default function Admin() {
                     <span>Enterprise impact</span>
                     <Textarea value={enterpriseText} onChange={(event) => setEnterpriseText(event.target.value)} rows={7} />
                   </label>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-2 text-sm md:col-span-3">
                     <div className="flex items-center justify-between gap-2">
                       <span>Gallery images</span>
                       <span className="text-xs text-muted-foreground">{projectDraft.images?.length ?? 0}/{MAX_GALLERY_IMAGES}</span>
@@ -953,7 +953,7 @@ export default function Admin() {
                       </div>
                       {selectedProjectSlug === "new" && <p className="mt-2 text-xs text-muted-foreground">Save the project before uploading gallery images.</p>}
                       {(projectDraft.images?.length ?? 0) > 0 ? (
-                        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
                           {projectDraft.images.map((image, index) => (
                             <div
                               key={`${image}-${index}`}
@@ -978,23 +978,24 @@ export default function Admin() {
                                 if (draggedGalleryIndex !== null) reorderGalleryImages(draggedGalleryIndex, index);
                                 setDraggedGalleryIndex(null);
                               }}
-                              className={`group overflow-hidden rounded-md border bg-card ${draggedGalleryIndex === index ? "border-primary opacity-50" : "border-border"}`}
+                              className={`group w-52 shrink-0 overflow-hidden rounded-md border bg-card ${draggedGalleryIndex === index ? "border-primary opacity-50" : "border-border"}`}
                             >
                               <div className="relative aspect-video bg-secondary">
                                 <img src={image} alt={`Gallery image ${index + 1}`} className="h-full w-full object-cover" />
                                 {index === 0 && <span className="absolute left-1.5 top-1.5 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-white">First</span>}
                               </div>
-                              <div className="flex items-center justify-between gap-1 p-1.5">
-                                <span className="truncate text-[10px] text-muted-foreground">Image {index + 1}</span>
-                                <div className="flex shrink-0 items-center">
+                              <div className="flex items-center justify-between gap-2 p-2">
+                                <span className="truncate text-xs text-muted-foreground">Image {index + 1}</span>
+                                <div className="flex shrink-0 items-center gap-1">
                                   <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => reorderGalleryImages(index, index - 1)} disabled={busy || index === 0} aria-label={`Move image ${index + 1} earlier`} title="Move earlier">
                                     <ArrowUp size={14} />
                                   </Button>
                                   <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => reorderGalleryImages(index, index + 1)} disabled={busy || index === projectDraft.images.length - 1} aria-label={`Move image ${index + 1} later`} title="Move later">
                                     <ArrowDown size={14} />
                                   </Button>
-                                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeGalleryImage(index)} disabled={busy} aria-label={`Remove image ${index + 1}`} title="Remove image">
+                                  <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 px-2 text-destructive hover:text-destructive" onClick={() => removeGalleryImage(index)} disabled={busy} aria-label={`Remove image ${index + 1}`} title="Remove image">
                                     <Trash2 size={13} />
+                                    Remove
                                   </Button>
                                 </div>
                               </div>
