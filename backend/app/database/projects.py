@@ -24,14 +24,22 @@ def get_project_by_slug(slug: str):
 
 
 def update_project_image(slug: str, image_url: str):
-    """Update both image_url and images (gallery) for a project."""
-    """Update a project's image_url and return the updated row."""
+    """Update a project's cover and keep it first in the gallery."""
     conn = get_connection()
     try:
         cur = dict_cursor(conn)
         cur.execute(
-            "UPDATE projects SET image_url = %s, images = ARRAY[%s] WHERE slug = %s RETURNING *",
-            (image_url, image_url, slug),
+            """
+            UPDATE projects
+            SET image_url = %s,
+                images = array_prepend(
+                    %s,
+                    array_remove(COALESCE(images, ARRAY[]::TEXT[]), %s)
+                )
+            WHERE slug = %s
+            RETURNING *
+            """,
+            (image_url, image_url, image_url, slug),
         )
         updated = cur.fetchone()
         conn.commit()

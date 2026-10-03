@@ -230,6 +230,16 @@ export function uploadProjectImage(secret: string, slug: string, file: File) {
   );
 }
 
+export function uploadProjectImages(secret: string, slug: string, files: File[]) {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("images", file));
+
+  return request<{ images: string[] }>(`/api/projects/${slug}/images`, secret, {
+    method: "POST",
+    body: formData,
+  });
+}
+
 export async function listTestimonials(): Promise<TestimonialPayload[]> {
   const response = await fetch(`${API_BASE}/api/testimonials`);
   if (!response.ok) throw new Error("Failed to load testimonials");

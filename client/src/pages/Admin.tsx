@@ -1,6 +1,8 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowDown,
   ArrowLeft,
+  ArrowUp,
   CheckCircle2,
   ExternalLink,
   FileText,
@@ -46,6 +48,7 @@ import {
   updateTestimonial,
   uploadArticleCoverImage,
   uploadProjectImage,
+  uploadProjectImages,
   verifyAdminSecret,
 } from "@/lib/adminApi";
 
@@ -84,6 +87,10 @@ const emptyTestimonial: TestimonialPayload = {
   approved: true,
   display_order: 0,
 };
+
+const MAX_GALLERY_IMAGES = 10;
+const MAX_GALLERY_IMAGE_SIZE = 5 * 1024 * 1024;
+const GALLERY_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function listToText(values: string[] | null | undefined) {
   return values?.join("\n") ?? "";
@@ -128,12 +135,14 @@ export default function Admin() {
   const [testimonialDraft, setTestimonialDraft] = useState<TestimonialPayload>(emptyTestimonial);
   const [techText, setTechText] = useState("");
   const [enterpriseText, setEnterpriseText] = useState("");
-  const [imagesText, setImagesText] = useState("");
+  const [galleryDropActive, setGalleryDropActive] = useState(false);
+  const [draggedGalleryIndex, setDraggedGalleryIndex] = useState<number | null>(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
   const projectImageInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.slug === selectedProjectSlug),
@@ -238,10 +247,13 @@ export default function Admin() {
 
   useEffect(() => {
     const next = selectedProject ?? emptyProject;
-    setProjectDraft({ ...next, tech: next.tech ?? [], enterprise: next.enterprise ?? [], images: next.images ?? [] });
+    const galleryImages = next.images ?? [];
+    const images = next.image_url && !galleryImages.includes(next.image_url)
+      ? [next.image_url, ...galleryImages]
+      : galleryImages;
+    setProjectDraft({ ...next, tech: next.tech ?? [], enterprise: next.enterprise ?? [], images });
     setTechText(listToText(next.tech));
     setEnterpriseText(listToText(next.enterprise));
-    setImagesText(listToText(next.images));
   }, [selectedProject]);
 
   useEffect(() => {
@@ -291,7 +303,7 @@ export default function Admin() {
 
   async function saveProject(event: FormEvent) {
     event.preventDefault();
-    const images = textToList(imagesText);
+    const images = projectDraft.images ?? [];
     const imageUrl = projectDraft.image_url?.trim() || images[0] || null;
     const project: ProjectPayload = {
       ...projectDraft,
@@ -355,7 +367,7 @@ export default function Admin() {
     try {
       const result = await uploadProjectImage(secret, selectedProjectSlug, file);
       setProjectField("image_url", result.imageUrl);
-      setImagesText(result.imageUrl);
+      setProjectField("images", [result.imageUrl, ...(projectDraft.images ?? []).filter((url) => url !== result.imageUrl)]);
       await loadProjects();
       setStatus("Project image uploaded.");
     } catch (err) {
@@ -364,6 +376,70 @@ export default function Admin() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function addGalleryImages(files: File[]) {
+    if (!files.length) return;
+    if (selectedProjectSlug === "new") {
+      setError("Save the project before uploading gallery images.");
+      return;
+    }
+    if ((projectDraft.images?.length ?? 0) + files.length > MAX_GALLERY_IMAGES) {
+      setError(`A project can have up to ${MAX_GALLERY_IMAGES} gallery images.`);
+      return;
+    }
+    const invalidType = files.find((file) => !GALLERY_IMAGE_TYPES.includes(file.type));
+    if (invalidType) {
+      setError(`${invalidType.name}: choose a JPG, PNG, or WebP image.`);
+      return;
+    }
+    const oversized = files.find((file) => file.size > MAX_GALLERY_IMAGE_SIZE);
+    if (oversized) {
+      setError(`${oversized.name}: each image must be 5 MB or smaller.`);
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    try {
+      const result = await uploadProjectImages(secret, selectedProjectSlug, files);
+      setProjectField("images", [...(projectDraft.images ?? []), ...result.images]);
+      setStatus(`${result.images.length} gallery image${result.images.length === 1 ? "" : "s"} uploaded. Save the project to publish the gallery.`);
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to upload gallery images.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function uploadGallerySelection(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    void addGalleryImages(files);
+  }
+
+  function reorderGalleryImages(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || toIndex < 0 || toIndex >= (projectDraft.images?.length ?? 0)) return;
+    const images = [...(projectDraft.images ?? [])];
+    const [moved] = images.splice(fromIndex, 1);
+    images.splice(toIndex, 0, moved);
+    setProjectField("images", images);
+  }
+
+  function removeGalleryImage(index: number) {
+    const images = [...(projectDraft.images ?? [])];
+    const [removed] = images.splice(index, 1);
+    setProjectField("images", images);
+    if (projectDraft.image_url === removed) {
+      setProjectField("image_url", images[0] ?? "");
+    }
+  }
+
+  function dropGalleryFiles(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setGalleryDropActive(false);
+    void addGalleryImages(Array.from(event.dataTransfer.files));
   }
 
   async function saveArticle(event: FormEvent) {
@@ -708,10 +784,105 @@ export default function Admin() {
                     <span>Enterprise impact</span>
                     <Textarea value={enterpriseText} onChange={(event) => setEnterpriseText(event.target.value)} rows={7} />
                   </label>
-                  <label className="space-y-2 text-sm">
-                    <span>Gallery images</span>
-                    <Textarea value={imagesText} onChange={(event) => setImagesText(event.target.value)} rows={7} />
-                  </label>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Gallery images</span>
+                      <span className="text-xs text-muted-foreground">{projectDraft.images?.length ?? 0}/{MAX_GALLERY_IMAGES}</span>
+                    </div>
+                    <input
+                      ref={galleryInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={uploadGallerySelection}
+                      className="hidden"
+                    />
+                    <div
+                      onDragEnter={(event) => {
+                        if (event.dataTransfer.types.includes("Files")) setGalleryDropActive(true);
+                      }}
+                      onDragOver={(event) => {
+                        if (event.dataTransfer.types.includes("Files")) {
+                          event.preventDefault();
+                          setGalleryDropActive(true);
+                        }
+                      }}
+                      onDragLeave={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setGalleryDropActive(false);
+                      }}
+                      onDrop={dropGalleryFiles}
+                      className={`rounded-lg border border-dashed p-3 transition-colors ${galleryDropActive ? "border-primary bg-primary/10" : "border-border bg-background/40"}`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">Upload screenshots</p>
+                          <FieldHint>Drop files here or choose images. JPG, PNG, or WebP; up to 5 MB each.</FieldHint>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => galleryInputRef.current?.click()}
+                          disabled={busy || selectedProjectSlug === "new" || (projectDraft.images?.length ?? 0) >= MAX_GALLERY_IMAGES}
+                        >
+                          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload size={16} />}
+                          Upload images
+                        </Button>
+                      </div>
+                      {selectedProjectSlug === "new" && <p className="mt-2 text-xs text-muted-foreground">Save the project before uploading gallery images.</p>}
+                      {(projectDraft.images?.length ?? 0) > 0 ? (
+                        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                          {projectDraft.images.map((image, index) => (
+                            <div
+                              key={`${image}-${index}`}
+                              draggable={projectDraft.images.length > 1}
+                              onDragStart={(event) => {
+                                event.dataTransfer.effectAllowed = "move";
+                                setDraggedGalleryIndex(index);
+                              }}
+                              onDragEnd={() => setDraggedGalleryIndex(null)}
+                              onDragOver={(event) => {
+                                event.preventDefault();
+                                if (draggedGalleryIndex !== null) event.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(event) => {
+                                if (event.dataTransfer.files.length > 0) {
+                                  event.stopPropagation();
+                                  dropGalleryFiles(event);
+                                  return;
+                                }
+                                event.preventDefault();
+                                event.stopPropagation();
+                                if (draggedGalleryIndex !== null) reorderGalleryImages(draggedGalleryIndex, index);
+                                setDraggedGalleryIndex(null);
+                              }}
+                              className={`group overflow-hidden rounded-md border bg-card ${draggedGalleryIndex === index ? "border-primary opacity-50" : "border-border"}`}
+                            >
+                              <div className="relative aspect-video bg-secondary">
+                                <img src={image} alt={`Gallery image ${index + 1}`} className="h-full w-full object-cover" />
+                                {index === 0 && <span className="absolute left-1.5 top-1.5 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-white">First</span>}
+                              </div>
+                              <div className="flex items-center justify-between gap-1 p-1.5">
+                                <span className="truncate text-[10px] text-muted-foreground">Image {index + 1}</span>
+                                <div className="flex shrink-0 items-center">
+                                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => reorderGalleryImages(index, index - 1)} disabled={busy || index === 0} aria-label={`Move image ${index + 1} earlier`} title="Move earlier">
+                                    <ArrowUp size={14} />
+                                  </Button>
+                                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => reorderGalleryImages(index, index + 1)} disabled={busy || index === projectDraft.images.length - 1} aria-label={`Move image ${index + 1} later`} title="Move later">
+                                    <ArrowDown size={14} />
+                                  </Button>
+                                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeGalleryImage(index)} disabled={busy} aria-label={`Remove image ${index + 1}`} title="Remove image">
+                                    <Trash2 size={13} />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 rounded-md bg-background/60 px-3 py-5 text-center text-xs text-muted-foreground">No gallery images yet.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -734,8 +905,8 @@ export default function Admin() {
               <FieldHint>How the project card will feel in the portfolio.</FieldHint>
               <div className="mt-4 overflow-hidden rounded-lg border border-primary/20 bg-[#111827]">
                 <div className="aspect-video bg-secondary">
-                  {projectDraft.image_url || imagesText ? (
-                    <img src={projectDraft.image_url || textToList(imagesText)[0]} alt="" className="h-full w-full object-cover" />
+                  {projectDraft.image_url || projectDraft.images?.[0] ? (
+                    <img src={projectDraft.image_url || projectDraft.images[0]} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No image yet</div>
                   )}

@@ -17,7 +17,9 @@ from app.database.projects import (
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_GALLERY_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_GALLERY_IMAGES = 10
 
 
 class ProjectPayload(BaseModel):
@@ -98,3 +100,45 @@ async def upload_project_image(slug: str, image: UploadFile = File(...)):
     updated = update_project_image(slug, image_url)
 
     return {"imageUrl": image_url, "project": updated}
+
+
+@router.post("/{slug}/images", dependencies=[Depends(require_admin)])
+async def upload_project_gallery(slug: str, images: list[UploadFile] = File(...)):
+    if not get_project_by_slug(slug):
+        raise HTTPException(status_code=404, detail="Project not found")
+    if not images:
+        raise HTTPException(status_code=400, detail="Choose at least one image")
+    if len(images) > MAX_GALLERY_IMAGES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Upload no more than {MAX_GALLERY_IMAGES} images at a time",
+        )
+
+    image_contents = []
+    for image in images:
+        if image.content_type not in ALLOWED_GALLERY_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail="Gallery images must be JPG, PNG, or WebP files",
+            )
+
+        contents = await image.read(MAX_SIZE + 1)
+        if len(contents) > MAX_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"{image.filename or 'Image'} is larger than 5MB",
+            )
+
+        image_contents.append((image, contents))
+
+    uploaded_urls = []
+    for image, contents in image_contents:
+        ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}[image.content_type]
+        blob_path = f"projects/{slug}/gallery-{uuid.uuid4().hex}{ext}"
+        try:
+            blob_result = vercel_blob.put(blob_path, contents, {"access": "public"})
+            uploaded_urls.append(blob_result["url"])
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Gallery upload failed: {str(e)}")
+
+    return {"images": uploaded_urls}
