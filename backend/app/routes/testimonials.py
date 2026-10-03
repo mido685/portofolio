@@ -21,6 +21,13 @@ class TestimonialPayload(BaseModel):
     display_order: int = 0
 
 
+class FeedbackSubmission(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    role: str | None = Field(default=None, max_length=160)
+    quote: str = Field(min_length=1, max_length=2000)
+    rating: int = Field(default=5, ge=0, le=5)
+
+
 @router.get("")
 def list_testimonials():
     return {"testimonials": get_all_testimonials(include_hidden=False)}
@@ -29,6 +36,23 @@ def list_testimonials():
 @router.get("/admin", dependencies=[Depends(require_admin)])
 def list_admin_testimonials():
     return {"testimonials": get_all_testimonials(include_hidden=True)}
+
+
+@router.post("/feedback")
+def submit_feedback(payload: FeedbackSubmission):
+    """Accept visitor feedback for admin review; public submissions are never published immediately."""
+    name = payload.name.strip()
+    quote = payload.quote.strip()
+    if not name or not quote:
+        raise HTTPException(status_code=422, detail="Name and feedback are required")
+    return insert_testimonial(
+        name=name,
+        role=payload.role.strip() if payload.role else None,
+        quote=quote,
+        rating=payload.rating,
+        approved=False,
+        display_order=0,
+    )
 
 
 @router.post("", dependencies=[Depends(require_admin)])

@@ -234,10 +234,10 @@ export default function Admin() {
   async function loadTestimonials() {
     try {
       setTestimonials(secret ? await listAdminTestimonials(secret) : []);
-      setStatus("Testimonials synced.");
+      setStatus("Feedback synced.");
     } catch (err) {
       if (isAdminAuthError(err)) lockAdmin(err.message);
-      else setError(err instanceof Error ? err.message : "Failed to load testimonials.");
+      else setError(err instanceof Error ? err.message : "Failed to load feedback.");
     }
   }
 
@@ -762,7 +762,7 @@ export default function Admin() {
                 Back to site
               </Link>
               <h1 className="mt-2 text-3xl font-bold text-primary">Portfolio Control Center</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Projects, articles, credentials, and comment moderation in one dashboard.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Projects, articles, credentials, feedback, and comment moderation in one dashboard.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -783,7 +783,7 @@ export default function Admin() {
             { icon: FileText, label: "Articles", value: String(articles.length) },
             { icon: Award, label: "Credentials", value: String(certifications.length) },
             { icon: MessageSquare, label: "Pending", value: String(comments.filter((comment) => !comment.approved).length) },
-            { icon: Sparkles, label: "Testimonials", value: String(testimonials.filter((testimonial) => testimonial.approved).length) },
+            { icon: Sparkles, label: "Visible feedback", value: String(testimonials.filter((testimonial) => testimonial.approved).length) },
           ].map((item) => (
             <div key={item.label} className="rounded-lg border border-primary/15 bg-card p-4">
               <item.icon className="mb-3 h-5 w-5 text-primary" />
@@ -799,7 +799,7 @@ export default function Admin() {
             { id: "articles" as const, icon: FileText, label: "Articles" },
             { id: "certifications" as const, icon: Award, label: "Certifications" },
             { id: "comments" as const, icon: MessageSquare, label: "Comments" },
-            { id: "testimonials" as const, icon: Sparkles, label: "Testimonials" },
+            { id: "testimonials" as const, icon: Sparkles, label: "Feedback" },
           ].map((item) => (
             <Button key={item.id} type="button" variant={section === item.id ? "default" : "secondary"} onClick={() => setSection(item.id)}>
               <item.icon size={16} />
@@ -1270,14 +1270,15 @@ export default function Admin() {
             <aside className="h-fit rounded-lg border border-border bg-card p-3">
               <Button type="button" className="w-full" onClick={() => setSelectedTestimonialId("new")}>
                 <Plus size={16} />
-                New Testimonial
+                Add Feedback
               </Button>
               <div className="mt-4 space-y-2">
+                {testimonials.length === 0 && <p className="px-2 py-3 text-sm text-muted-foreground">No feedback yet. Visitor submissions will appear here for your approval.</p>}
                 {testimonials.map((testimonial) => (
                   <button key={testimonial.id} type="button" onClick={() => setSelectedTestimonialId(testimonial.id ?? "new")} className={`w-full rounded-md border px-3 py-3 text-left text-sm transition-colors ${selectedTestimonialId === testimonial.id ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/40 hover:bg-secondary"}`}>
                     <span className="block font-medium">{testimonial.name}</span>
                     <span className="mt-1 block text-xs text-muted-foreground">{testimonial.role || "No role added"}</span>
-                    <span className="mt-2 block text-xs text-muted-foreground">{testimonial.approved ? "Visible" : "Hidden"} / {testimonial.rating} stars</span>
+                    <span className={`mt-2 block text-xs ${testimonial.approved ? "text-primary" : "text-amber-500"}`}>{testimonial.approved ? "Approved · visible on site" : "Pending approval · hidden"} / {testimonial.rating} stars</span>
                   </button>
                 ))}
               </div>
@@ -1287,12 +1288,12 @@ export default function Admin() {
               <section className="rounded-lg border border-border bg-card p-5">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-semibold text-foreground">Testimonial Editor</h2>
-                    <FieldHint>Publish client reviews and portfolio testimonials.</FieldHint>
+                    <h2 className="text-lg font-semibold text-foreground">Feedback Moderation</h2>
+                    <FieldHint>Visitor submissions stay hidden until you approve them. Turn off Visible to hide approved feedback.</FieldHint>
                   </div>
                   <label className="inline-flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={testimonialDraft.approved} onChange={(event) => setTestimonialField("approved", event.target.checked)} />
-                    Visible
+                    Approved · visible on site
                   </label>
                 </div>
 
@@ -1324,7 +1325,7 @@ export default function Admin() {
               <section className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-5">
                 <Button type="submit" disabled={busy}>
                   {busy ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                  Save Testimonial
+                  Save Feedback
                 </Button>
                 {selectedTestimonialId !== "new" && (
                   <Button type="button" variant="destructive" onClick={removeTestimonial} disabled={busy}>

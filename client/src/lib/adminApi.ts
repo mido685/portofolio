@@ -301,6 +301,20 @@ export async function listTestimonials(): Promise<TestimonialPayload[]> {
   return data.testimonials;
 }
 
+export function submitFeedback(feedback: Pick<TestimonialPayload, "name" | "role" | "quote" | "rating">) {
+  return fetch(`${API_BASE}/api/testimonials/feedback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(feedback),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(data?.detail || "Could not submit feedback");
+    }
+    return response.json() as Promise<TestimonialPayload>;
+  });
+}
+
 export async function listAdminTestimonials(secret: string): Promise<TestimonialPayload[]> {
   const data = await request<{ testimonials: TestimonialPayload[] }>("/api/testimonials/admin", secret);
   return data.testimonials;
