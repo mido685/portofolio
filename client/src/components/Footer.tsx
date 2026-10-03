@@ -9,7 +9,7 @@ const footerLinks = {
   ],
   navigation: [
     { label: "About", href: "#about" },
-    { label: "Projects", href: "#projects" },
+    { label: "Projects", href: "/projects" },
     { label: "Skills", href: "#technologies" },
     { label: "Certifications", href: "/certifications" },
     { label: "Architecture", href: "#architecture" },

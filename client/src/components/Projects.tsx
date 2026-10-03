@@ -4,6 +4,7 @@ import { Github, ExternalLink, BarChart3, GitBranch, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { projects as localProjects } from "@/data/projects";
 import { API_BASE } from "@/lib/apiBase";
+import { Button } from "@/components/ui/button";
 
 type Project = {
   slug: string;
@@ -176,6 +177,12 @@ export default function Projects() {
               </div>
             </motion.article>
           ))}
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <Button variant="secondary" asChild>
+            <Link href="/projects">Explore all projects</Link>
+          </Button>
         </div>
       </div>
     </section>

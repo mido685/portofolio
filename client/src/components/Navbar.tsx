@@ -6,7 +6,7 @@ import StarkLogo from "@/components/StarkLogo";
 const navLinks = [
   { label: "Home", href: "#hero" },
   { label: "About", href: "#about" },
-  { label: "Projects", href: "#projects" },
+  { label: "Projects", href: "/projects" },
   { label: "Skills", href: "#technologies" },
   { label: "Now", href: "#now" },
   { label: "Blog", href: "#blog" },

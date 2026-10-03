@@ -13,6 +13,7 @@ import BackendEngineering from "./pages/BackendEngineering";
 import ModelDeployment from "./pages/ModelDeployment";
 import AiConsulting from "./pages/AiConsulting";
 import ProjectDetail from "./pages/ProjectDetail";
+import ProjectsPage from "./pages/ProjectsPage";
 import ArticleDetail from "./pages/ArticleDetail";
 import Certifications from "./pages/Certifications";
 import Admin from "./pages/Admin";
@@ -29,6 +30,7 @@ function Router() {
       <Route path={"/model-deployment"} component={ModelDeployment} />
       <Route path={"/ai-consulting"} component={AiConsulting} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/projects"} component={ProjectsPage} />
       <Route path={"/projects/:slug"} component={ProjectDetail} />
       <Route path={"/articles/:slug"} component={ArticleDetail} />
       <Route path={"/certifications"} component={Certifications} />
