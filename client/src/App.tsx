@@ -16,6 +16,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import ProjectsPage from "./pages/ProjectsPage";
 import ArticleDetail from "./pages/ArticleDetail";
 import Certifications from "./pages/Certifications";
+import Feedback from "./pages/Feedback";
 import Admin from "./pages/Admin";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
       <Route path={"/projects/:slug"} component={ProjectDetail} />
       <Route path={"/articles/:slug"} component={ArticleDetail} />
       <Route path={"/certifications"} component={Certifications} />
+      <Route path={"/feedback"} component={Feedback} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Now", href: "#now" },
   { label: "Blog", href: "#blog" },
   { label: "Certifications", href: "/certifications" },
+  { label: "Feedback", href: "/feedback" },
   { label: "Contact", href: "#contact" },
 ];
 

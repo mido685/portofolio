@@ -12,6 +12,7 @@ const footerLinks = {
     { label: "Projects", href: "/projects" },
     { label: "Skills", href: "#technologies" },
     { label: "Certifications", href: "/certifications" },
+    { label: "Feedback", href: "/feedback" },
     { label: "Architecture", href: "#architecture" },
     { label: "Now", href: "#now" },
     { label: "Contact", href: "#contact" },

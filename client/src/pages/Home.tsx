@@ -10,7 +10,6 @@ import Technologies from "@/components/Technologies";
 import Architecture from "@/components/Architecture";
 import Achievements from "@/components/Achievements";
 import CurrentlyBuilding from "@/components/CurrentlyBuilding";
-import Testimonials from "@/components/Testimonials";
 import Blog from "@/components/Blog";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
@@ -27,7 +26,6 @@ export default function Home() {
       <Architecture />
       <Achievements />
       <CurrentlyBuilding />
-      <Testimonials />
       <Blog />
       <Contact />
       <Footer />
