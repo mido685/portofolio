@@ -231,9 +231,23 @@ html {
   animation: bot-mascot-smile 3.8s ease-in-out infinite;
 }
 
+.bot-launcher {
+  transform: translateX(0);
+  transition: transform 280ms ease-out;
+}
+
+.bot-launcher:hover,
+.bot-launcher:focus-visible {
+  transform: translateX(-0.35rem);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bot-mascot-wave,
   .bot-mascot-smile {
     animation: none;
+  }
+
+  .bot-launcher {
+    transition: none;
   }
 }

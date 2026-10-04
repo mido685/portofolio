@@ -103,7 +103,7 @@ export default function PortfolioChatbot() {
         <p className="bg-[#0a111c] pb-2 text-center text-[10px] text-slate-600"><Sparkles size={10} className="mr-1 inline text-[#00d4aa]/70" />Portfolio info assistant</p>
       </section>}
 
-      <button type="button" onClick={() => setOpen((current) => !current)} aria-label={open ? "Close chat" : "Open chat"} aria-expanded={open} className="group relative flex h-14 w-14 items-center justify-center rounded-full border border-[#00d4aa]/50 bg-[#00d4aa] text-[#06111a] shadow-[0_8px_30px_rgba(0,212,170,0.24)] transition duration-200 hover:scale-105 hover:shadow-[0_8px_36px_rgba(0,212,170,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00d4aa] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0e1a]">
+      <button type="button" onClick={() => setOpen((current) => !current)} aria-label={open ? "Close chat" : "Open chat"} aria-expanded={open} className={`group relative flex h-14 w-14 items-center justify-center rounded-full border border-[#00d4aa]/50 bg-[#00d4aa] text-[#06111a] shadow-[0_8px_30px_rgba(0,212,170,0.24)] transition duration-200 hover:scale-105 hover:shadow-[0_8px_36px_rgba(0,212,170,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00d4aa] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0e1a] ${open ? "" : "bot-launcher"}`}>
         {open ? <X size={21} /> : <span className="relative flex h-12 w-11 flex-col items-center justify-end" aria-hidden="true">
           <span className="absolute top-0 h-2 w-0.5 rounded-full bg-[#073d3a]" />
           <span className="absolute -top-0.5 h-1.5 w-1.5 rounded-full bg-[#073d3a] shadow-[0_0_7px_#073d3a]" />
