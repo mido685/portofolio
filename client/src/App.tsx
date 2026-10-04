@@ -18,6 +18,7 @@ import ArticleDetail from "./pages/ArticleDetail";
 import Certifications from "./pages/Certifications";
 import Feedback from "./pages/Feedback";
 import Admin from "./pages/Admin";
+import PortfolioChatbot from "./components/PortfolioChatbot";
 
 function Router() {
   return (
@@ -49,6 +50,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <PortfolioChatbot />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
