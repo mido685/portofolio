@@ -104,8 +104,21 @@ export default function PortfolioChatbot() {
       </section>}
 
       <button type="button" onClick={() => setOpen((current) => !current)} aria-label={open ? "Close chat" : "Open chat"} aria-expanded={open} className="group relative flex h-14 w-14 items-center justify-center rounded-full border border-[#00d4aa]/50 bg-[#00d4aa] text-[#06111a] shadow-[0_8px_30px_rgba(0,212,170,0.24)] transition duration-200 hover:scale-105 hover:shadow-[0_8px_36px_rgba(0,212,170,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00d4aa] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0e1a]">
-        {open ? <X size={21} /> : <><MessageCircle size={23} /><span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#0a0e1a] bg-emerald-400" /></>}
-        {!open && <span className="pointer-events-none absolute right-[calc(100%+0.7rem)] whitespace-nowrap rounded-lg border border-white/10 bg-[#111827] px-3 py-2 text-xs text-slate-200 opacity-0 shadow-lg transition group-hover:opacity-100">Questions? Chat with STARK</span>}
+        {open ? <X size={21} /> : <span className="relative flex h-12 w-11 flex-col items-center justify-end" aria-hidden="true">
+          <span className="absolute top-0 h-2 w-0.5 rounded-full bg-[#073d3a]" />
+          <span className="absolute -top-0.5 h-1.5 w-1.5 rounded-full bg-[#073d3a] shadow-[0_0_7px_#073d3a]" />
+          <span className="absolute left-0.5 top-3 h-4 w-1.5 rounded-l-full border border-[#073d3a] bg-[#0b2731]" />
+          <span className="absolute right-0.5 top-3 h-4 w-1.5 rounded-r-full border border-[#073d3a] bg-[#0b2731]" />
+          <span className="relative z-10 mb-2 flex h-7 w-9 items-center justify-center gap-1.5 rounded-[11px] border-2 border-[#073d3a] bg-gradient-to-b from-[#173c46] to-[#0a1823] shadow-[inset_0_1px_3px_rgba(0,212,170,0.25)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#53ffe0] shadow-[0_0_6px_#00d4aa]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#53ffe0] shadow-[0_0_6px_#00d4aa]" />
+            <span className="absolute bottom-1 left-1/2 h-1 w-2 -translate-x-1/2 rounded-b-full border-b border-[#00d4aa]" />
+          </span>
+          <span className="absolute bottom-0 h-2.5 w-6 rounded-t-lg border border-b-0 border-[#073d3a] bg-[#0b2731]" />
+          <span className="absolute bottom-0.5 left-[calc(50%-0.15rem)] z-20 h-1 w-1 rounded-full bg-[#00d4aa]" />
+          <span className="absolute right-0 top-2 h-3 w-3 rounded-full border-2 border-[#00d4aa] bg-emerald-400" />
+        </span>}
+        {!open && <span className="pointer-events-none absolute right-[calc(100%+0.7rem)] whitespace-nowrap rounded-lg border border-white/10 bg-[#111827] px-3 py-2 text-xs text-slate-200 opacity-0 shadow-lg transition group-hover:opacity-100">Ask the STARK bot</span>}
       </button>
     </div>
   );
