@@ -112,7 +112,10 @@ export default function PortfolioChatbot() {
           <span className="relative z-10 mb-2 flex h-7 w-9 items-center justify-center gap-1.5 rounded-[11px] border-2 border-[#073d3a] bg-gradient-to-b from-[#173c46] to-[#0a1823] shadow-[inset_0_1px_3px_rgba(0,212,170,0.25)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#53ffe0] shadow-[0_0_6px_#00d4aa]" />
             <span className="h-1.5 w-1.5 rounded-full bg-[#53ffe0] shadow-[0_0_6px_#00d4aa]" />
-            <span className="absolute bottom-1 left-1/2 h-1 w-2 -translate-x-1/2 rounded-b-full border-b border-[#00d4aa]" />
+            <span className="bot-mascot-smile absolute bottom-1 left-1/2 h-1 w-2 -translate-x-1/2 rounded-b-full border-b border-[#00d4aa]" />
+          </span>
+          <span className="bot-mascot-wave absolute right-0 top-[27px] h-[3px] w-2 origin-left rounded-full bg-[#073d3a]">
+            <span className="absolute -right-1 -top-0.5 h-[5px] w-[5px] rounded-full border border-[#073d3a] bg-[#53ffe0]" />
           </span>
           <span className="absolute bottom-0 h-2.5 w-6 rounded-t-lg border border-b-0 border-[#073d3a] bg-[#0b2731]" />
           <span className="absolute bottom-0.5 left-[calc(50%-0.15rem)] z-20 h-1 w-1 rounded-full bg-[#00d4aa]" />
