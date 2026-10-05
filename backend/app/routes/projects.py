@@ -22,7 +22,7 @@ ALLOWED_GALLERY_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_SIZE = 5 * 1024 * 1024  # 5MB
 MAX_GALLERY_IMAGES = 10
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime"}
-MAX_VIDEO_SIZE = 50 * 1024 * 1024
+MAX_VIDEO_SIZE = 200 * 1024 * 1024
 
 
 class ProjectPayload(BaseModel):
@@ -156,7 +156,7 @@ async def upload_project_video(slug: str, video: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Choose an MP4, WebM, or MOV video")
     contents = await video.read(MAX_VIDEO_SIZE + 1)
     if len(contents) > MAX_VIDEO_SIZE:
-        raise HTTPException(status_code=400, detail="Video file too large (max 50MB)")
+        raise HTTPException(status_code=400, detail="Video file too large (max 200MB)")
     ext = {"video/mp4": ".mp4", "video/webm": ".webm", "video/quicktime": ".mov"}[video.content_type]
     try:
         blob_result = vercel_blob.put(f"projects/{slug}/demo-{uuid.uuid4().hex}{ext}", contents, {"access": "public"})

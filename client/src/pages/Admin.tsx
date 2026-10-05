@@ -436,8 +436,8 @@ export default function Admin() {
       setError("Choose an MP4, WebM, or MOV video.");
       return;
     }
-    if (file.size > 50 * 1024 * 1024) {
-      setError("Demo videos must be 50 MB or smaller.");
+    if (file.size > 200 * 1024 * 1024) {
+      setError("Demo videos must be 200 MB or smaller.");
       return;
     }
     setBusy(true);
@@ -927,7 +927,7 @@ export default function Admin() {
                       )}
                     </div>
                     {selectedProjectSlug === "new" && <FieldHint>Save the project before uploading its demo video.</FieldHint>}
-                    <FieldHint>MP4, WebM, or MOV; up to 50 MB. Uploads are saved automatically.</FieldHint>
+                    <FieldHint>MP4, WebM, or MOV; up to 200 MB. Uploads are saved automatically.</FieldHint>
                     {projectDraft.video_url && <video src={projectDraft.video_url} controls className="mt-2 aspect-video max-h-64 w-full rounded-md bg-black" />}
                   </div>
                   <label className="space-y-2 text-sm">
