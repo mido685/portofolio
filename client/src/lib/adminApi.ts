@@ -9,6 +9,7 @@ export type ProjectPayload = {
   image_url: string | null;
   github_url: string | null;
   demo_url: string | null;
+  video_url: string | null;
   stars: number;
   tech: string[];
   problem: string | null;
@@ -241,6 +242,15 @@ export function uploadProjectImage(secret: string, slug: string, file: File) {
       body: formData,
     }
   );
+}
+
+export function uploadProjectVideo(secret: string, slug: string, file: File) {
+  const formData = new FormData();
+  formData.append("video", file);
+  return request<{ videoUrl: string; project: ProjectPayload }>(`/api/projects/${slug}/video`, secret, {
+    method: "POST",
+    body: formData,
+  });
 }
 
 export function uploadProjectImages(secret: string, slug: string, files: File[]) {

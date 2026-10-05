@@ -51,6 +51,21 @@ def update_project_image(slug: str, image_url: str):
         conn.close()
 
 
+def update_project_video(slug: str, video_url: str):
+    conn = get_connection()
+    try:
+        cur = dict_cursor(conn)
+        cur.execute("UPDATE projects SET video_url = %s WHERE slug = %s RETURNING *", (video_url, slug))
+        row = cur.fetchone()
+        conn.commit()
+        return row
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def update_project(
     slug: str,
     title: str,
@@ -64,6 +79,7 @@ def update_project(
     enterprise: list = None,
     images: list = None,
     image_url: str = None,
+    video_url: str = None,
 ):
     conn = get_connection()
     try:
@@ -81,7 +97,8 @@ def update_project(
                 solution = %s,
                 enterprise = %s,
                 images = %s,
-                image_url = %s
+                image_url = %s,
+                video_url = %s
             WHERE slug = %s
             RETURNING *
             """,
@@ -97,6 +114,7 @@ def update_project(
                 enterprise,
                 images,
                 image_url,
+                video_url,
                 slug,
             ),
         )
@@ -138,6 +156,7 @@ def insert_project(
     enterprise: list = None,
     images: list = None,
     image_url: str = None,
+    video_url: str = None,
 ):
     conn = get_connection()
     try:
@@ -146,13 +165,13 @@ def insert_project(
             """
             INSERT INTO projects
                 (slug, title, description, github_url, demo_url, stars, tech,
-                 problem, solution, enterprise, images, image_url)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 problem, solution, enterprise, images, image_url, video_url)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (slug) DO NOTHING
             RETURNING *
             """,
             (slug, title, description, github_url, demo_url, stars, tech,
-             problem, solution, enterprise, images, image_url),
+             problem, solution, enterprise, images, image_url, video_url),
         )
         row = cur.fetchone()
         conn.commit()

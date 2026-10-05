@@ -30,6 +30,7 @@ def init_db() -> None:
         cur.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS solution TEXT;")
         cur.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS enterprise TEXT[];")
         cur.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS images TEXT[];")
+        cur.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS video_url TEXT;")
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS articles (

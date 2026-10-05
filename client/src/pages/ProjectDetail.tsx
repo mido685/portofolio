@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import {
   Github,
+  Play,
   ExternalLink,
   ArrowLeft,
   AlertTriangle,
@@ -26,6 +27,7 @@ type Project = {
   images?: string[];
   github_url: string;
   demo_url: string;
+  video_url?: string | null;
   stars: number;
   tech: string[];
   problem: string;
@@ -148,6 +150,17 @@ export default function ProjectDetail() {
                 <Github size={16} />
                 GitHub
               </a>
+              {project.video_url && (
+                <a
+                  href={project.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-foreground text-sm font-medium rounded-md hover:bg-secondary/70 transition-colors border border-primary/40"
+                >
+                  <Play size={16} fill="currentColor" />
+                  Watch Product Demo
+                </a>
+              )}
 
               <a
                 href={project.demo_url}

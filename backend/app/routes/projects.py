@@ -12,6 +12,7 @@ from app.database.projects import (
     insert_project,
     update_project,
     update_project_image,
+    update_project_video,
 )
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -20,6 +21,8 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_GALLERY_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_SIZE = 5 * 1024 * 1024  # 5MB
 MAX_GALLERY_IMAGES = 10
+ALLOWED_VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime"}
+MAX_VIDEO_SIZE = 50 * 1024 * 1024
 
 
 class ProjectPayload(BaseModel):
@@ -35,6 +38,7 @@ class ProjectPayload(BaseModel):
     enterprise: list[str] = Field(default_factory=list)
     images: list[str] = Field(default_factory=list)
     image_url: str | None = None
+    video_url: str | None = None
 
 
 @router.get("")
@@ -142,3 +146,22 @@ async def upload_project_gallery(slug: str, images: list[UploadFile] = File(...)
             raise HTTPException(status_code=500, detail=f"Gallery upload failed: {str(e)}")
 
     return {"images": uploaded_urls}
+
+
+@router.post("/{slug}/video", dependencies=[Depends(require_admin)])
+async def upload_project_video(slug: str, video: UploadFile = File(...)):
+    if not get_project_by_slug(slug):
+        raise HTTPException(status_code=404, detail="Project not found")
+    if video.content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(status_code=400, detail="Choose an MP4, WebM, or MOV video")
+    contents = await video.read(MAX_VIDEO_SIZE + 1)
+    if len(contents) > MAX_VIDEO_SIZE:
+        raise HTTPException(status_code=400, detail="Video file too large (max 50MB)")
+    ext = {"video/mp4": ".mp4", "video/webm": ".webm", "video/quicktime": ".mov"}[video.content_type]
+    try:
+        blob_result = vercel_blob.put(f"projects/{slug}/demo-{uuid.uuid4().hex}{ext}", contents, {"access": "public"})
+        video_url = blob_result["url"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Video upload failed: {str(e)}")
+    updated = update_project_video(slug, video_url)
+    return {"videoUrl": video_url, "project": updated}

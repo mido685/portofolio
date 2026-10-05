@@ -13,6 +13,7 @@ import {
   LogOut,
   MessageSquare,
   Plus,
+  Play,
   RefreshCw,
   Save,
   ShieldCheck,
@@ -55,6 +56,7 @@ import {
   uploadArticleCoverImage,
   uploadCertificationFile,
   uploadProjectImage,
+  uploadProjectVideo,
   uploadProjectImages,
   verifyAdminSecret,
 } from "@/lib/adminApi";
@@ -68,6 +70,7 @@ const emptyProject: ProjectPayload = {
   image_url: "",
   github_url: "",
   demo_url: "",
+  video_url: "",
   stars: 5,
   tech: [],
   problem: "",
@@ -164,6 +167,7 @@ export default function Admin() {
   const [busy, setBusy] = useState(false);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
   const projectImageInputRef = useRef<HTMLInputElement>(null);
+  const projectVideoInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const certificationFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -418,6 +422,33 @@ export default function Admin() {
     } catch (err) {
       if (isAdminAuthError(err)) lockAdmin(err.message);
       else setError(err instanceof Error ? err.message : "Failed to upload project image.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function uploadProjectDemoVideo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || selectedProjectSlug === "new") return;
+    if (!["video/mp4", "video/webm", "video/quicktime"].includes(file.type)) {
+      setError("Choose an MP4, WebM, or MOV video.");
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setError("Demo videos must be 50 MB or smaller.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const result = await uploadProjectVideo(secret, selectedProjectSlug, file);
+      setProjectField("video_url", result.videoUrl);
+      await loadProjects();
+      setStatus("Product demo video uploaded.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to upload demo video.");
     } finally {
       setBusy(false);
     }
@@ -861,6 +892,20 @@ export default function Admin() {
                     <span>Demo URL</span>
                     <Input value={projectDraft.demo_url ?? ""} onChange={(event) => setProjectField("demo_url", event.target.value)} />
                   </label>
+                  <div className="space-y-2 text-sm md:col-span-2">
+                    <span>Product demo video</span>
+                    <div className="flex gap-2">
+                      <Input value={projectDraft.video_url ?? ""} onChange={(event) => setProjectField("video_url", event.target.value)} placeholder="Paste video URL or upload a file" />
+                      <input ref={projectVideoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" onChange={uploadProjectDemoVideo} className="hidden" />
+                      <Button type="button" variant="secondary" onClick={() => projectVideoInputRef.current?.click()} disabled={busy || selectedProjectSlug === "new"}>
+                        {busy ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                        Upload video
+                      </Button>
+                    </div>
+                    {selectedProjectSlug === "new" && <FieldHint>Save the project before uploading its demo video.</FieldHint>}
+                    <FieldHint>MP4, WebM, or MOV; up to 50 MB. Uploads are saved automatically.</FieldHint>
+                    {projectDraft.video_url && <video src={projectDraft.video_url} controls className="mt-2 aspect-video max-h-64 w-full rounded-md bg-black" />}
+                  </div>
                   <label className="space-y-2 text-sm">
                     <span>Strength rating</span>
                     <Input type="number" min={0} max={5} value={projectDraft.stars} onChange={(event) => setProjectField("stars", Number(event.target.value))} />
