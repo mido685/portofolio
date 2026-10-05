@@ -253,6 +253,12 @@ export function uploadProjectVideo(secret: string, slug: string, file: File) {
   });
 }
 
+export function deleteProjectVideo(secret: string, slug: string) {
+  return request<{ project: ProjectPayload }>(`/api/projects/${slug}/video`, secret, {
+    method: "DELETE",
+  });
+}
+
 export function uploadProjectImages(secret: string, slug: string, files: File[]) {
   const formData = new FormData();
   files.forEach((file) => formData.append("images", file));

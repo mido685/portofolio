@@ -39,6 +39,7 @@ import {
   deleteCertification,
   deleteComment,
   deleteProject,
+  deleteProjectVideo,
   deleteTestimonial,
   isAdminAuthError,
   listArticles,
@@ -449,6 +450,23 @@ export default function Admin() {
     } catch (err) {
       if (isAdminAuthError(err)) lockAdmin(err.message);
       else setError(err instanceof Error ? err.message : "Failed to upload demo video.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeProjectDemoVideo() {
+    if (selectedProjectSlug === "new" || !projectDraft.video_url) return;
+    setBusy(true);
+    setError("");
+    try {
+      await deleteProjectVideo(secret, selectedProjectSlug);
+      setProjectField("video_url", "");
+      await loadProjects();
+      setStatus("Product demo video removed. You can upload a replacement now.");
+    } catch (err) {
+      if (isAdminAuthError(err)) lockAdmin(err.message);
+      else setError(err instanceof Error ? err.message : "Failed to remove demo video.");
     } finally {
       setBusy(false);
     }
@@ -901,6 +919,12 @@ export default function Admin() {
                         {busy ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
                         Upload video
                       </Button>
+                      {projectDraft.video_url && (
+                        <Button type="button" variant="destructive" onClick={removeProjectDemoVideo} disabled={busy}>
+                          <Trash2 size={16} />
+                          Delete video
+                        </Button>
+                      )}
                     </div>
                     {selectedProjectSlug === "new" && <FieldHint>Save the project before uploading its demo video.</FieldHint>}
                     <FieldHint>MP4, WebM, or MOV; up to 50 MB. Uploads are saved automatically.</FieldHint>

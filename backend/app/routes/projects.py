@@ -165,3 +165,11 @@ async def upload_project_video(slug: str, video: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Video upload failed: {str(e)}")
     updated = update_project_video(slug, video_url)
     return {"videoUrl": video_url, "project": updated}
+
+
+@router.delete("/{slug}/video", dependencies=[Depends(require_admin)])
+def delete_project_video(slug: str):
+    if not get_project_by_slug(slug):
+        raise HTTPException(status_code=404, detail="Project not found")
+    updated = update_project_video(slug, None)
+    return {"project": updated}
