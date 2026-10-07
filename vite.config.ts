@@ -203,7 +203,36 @@ function vitePluginStorageProxy(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
+function projectShareMetadata(): Plugin {
+  return {
+    name: "project-share-metadata",
+    writeBundle() {
+      const outputDir = path.resolve(PROJECT_ROOT, "dist", "public");
+      const indexPath = path.join(outputDir, "index.html");
+      const projectDir = path.join(outputDir, "projects", "stark-enterprise-inventory-management");
+      const projectHtml = fs.readFileSync(indexPath, "utf-8");
+      const metadata = [
+        ['property="og:title"', '<meta property="og:title" content="STARK Enterprise Inventory Management" />'],
+        ['property="og:description"', '<meta property="og:description" content="Enterprise inventory, purchasing, costing and multi-branch operations in one platform." />'],
+        ['property="og:image"', '<meta property="og:image" content="https://www.starkai.us/images/stark-preview.png" />'],
+        ['property="og:url"', '<meta property="og:url" content="https://www.starkai.us/projects/stark-enterprise-inventory-management" />'],
+        ['name="twitter:title"', '<meta name="twitter:title" content="STARK Enterprise Inventory Management" />'],
+        ['name="twitter:description"', '<meta name="twitter:description" content="Enterprise inventory, purchasing, costing and multi-branch operations in one platform." />'],
+        ['name="twitter:image"', '<meta name="twitter:image" content="https://www.starkai.us/images/stark-preview.png" />'],
+      ] as const;
+
+      let html = projectHtml;
+      for (const [selector, tag] of metadata) {
+        html = html.replace(new RegExp(`<meta\\s+${selector}[\\s\\S]*?\\/?>`), tag);
+      }
+
+      fs.mkdirSync(projectDir, { recursive: true });
+      fs.writeFileSync(path.join(projectDir, "index.html"), html);
+    },
+  };
+}
+
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy(), projectShareMetadata()];
 
 export default defineConfig({
   plugins,
