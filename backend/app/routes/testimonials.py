@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app.core.auth import require_admin
@@ -29,12 +29,14 @@ class FeedbackSubmission(BaseModel):
 
 
 @router.get("")
-def list_testimonials():
+def list_testimonials(response: Response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return {"testimonials": get_all_testimonials(include_hidden=False)}
 
 
 @router.get("/admin", dependencies=[Depends(require_admin)])
-def list_admin_testimonials():
+def list_admin_testimonials(response: Response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return {"testimonials": get_all_testimonials(include_hidden=True)}
 
 

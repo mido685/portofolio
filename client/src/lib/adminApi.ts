@@ -311,7 +311,7 @@ export function uploadCertificationFile(secret: string, id: number, file: File) 
 }
 
 export async function listTestimonials(): Promise<TestimonialPayload[]> {
-  const response = await fetch(`${API_BASE}/api/testimonials`);
+  const response = await fetch(`${API_BASE}/api/testimonials`, { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to load testimonials");
   const data = await response.json();
   return data.testimonials;
@@ -332,7 +332,7 @@ export function submitFeedback(feedback: Pick<TestimonialPayload, "name" | "role
 }
 
 export async function listAdminTestimonials(secret: string): Promise<TestimonialPayload[]> {
-  const data = await request<{ testimonials: TestimonialPayload[] }>("/api/testimonials/admin", secret);
+  const data = await request<{ testimonials: TestimonialPayload[] }>("/api/testimonials/admin", secret, { cache: "no-store" });
   return data.testimonials;
 }
 
