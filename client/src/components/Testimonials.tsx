@@ -9,8 +9,9 @@ function initialsFor(name: string) {
 
 function StarRow({ rating }: { rating: number }) {
   const value = Math.max(0, Math.min(5, Math.round(rating)));
-  return <div className="mt-3 flex items-center gap-1" aria-label={value ? `${value} out of 5 stars` : "No rating"}>
-    {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} className={i < value ? "fill-amber-400 text-amber-400" : "fill-transparent text-slate-600"} />)}
+  return <div className="flex items-center gap-1" aria-label={value ? `${value} out of 5 stars` : "No rating"}>
+    {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={18} className={i < value ? "fill-amber-400 text-amber-400" : "fill-transparent text-slate-600"} />)}
+    <span className="ml-2 text-sm font-semibold tabular-nums text-slate-200">{value.toFixed(1)}</span>
   </div>;
 }
 
@@ -60,26 +61,45 @@ export default function Testimonials() {
 
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
           <section aria-labelledby="published-feedback-title" className="min-w-0">
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <div>
-                <h2 id="published-feedback-title" className="text-xl font-semibold text-white">Community feedback</h2>
-                <p className="mt-1 text-sm text-slate-500">Only approved feedback is published.</p>
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div className="flex items-stretch gap-4">
+                <span aria-hidden="true" className="w-1 shrink-0 rounded-full bg-gradient-to-b from-[#00e5d4] to-[#8b5cf6] shadow-[0_0_18px_rgba(0,212,170,0.3)]" />
+                <div>
+                  <h2 id="published-feedback-title" className="text-2xl font-bold tracking-tight text-white sm:text-3xl">What People <span className="bg-gradient-to-r from-[#00e5d4] to-[#8b5cf6] bg-clip-text text-transparent">Say</span></h2>
+                  <p className="mt-1 text-sm text-slate-500">Only approved feedback is published.</p>
+                </div>
               </div>
-              <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-slate-400">{testimonials.length} {testimonials.length === 1 ? "post" : "posts"}</span>
+              <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/70 px-4 py-2 text-xs text-slate-300 shadow-inner shadow-white/[0.03]">
+                <MessageSquareQuote size={15} className="text-[#00e5d4]" />
+                {testimonials.length} {testimonials.length === 1 ? "post" : "posts"}
+              </span>
             </div>
 
             {testimonials.length > 0 ? <div className="space-y-4">
-              {testimonials.map((item, i) => <motion.article key={item.id ?? `${item.name}-${i}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: Math.min(i * 0.06, 0.3) }} className="rounded-xl border border-white/[0.08] bg-[#111827]/90 p-5 shadow-lg shadow-black/10 sm:p-6">
-                <MessageSquareQuote size={19} className="mb-4 text-[#00d4aa]" />
-                <p className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-200">&ldquo;{item.quote}&rdquo;</p>
-                <div className="mt-6 flex items-center gap-3 border-t border-white/[0.07] pt-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#00d4aa]/20 bg-[#00d4aa]/10 text-sm font-semibold text-[#00d4aa]">{initialsFor(item.name)}</div>
-                  <div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{item.name}</p><p className="truncate text-xs text-slate-500">{item.role || "Visitor"}</p></div>
+              {testimonials.map((item, i) => <motion.article key={item.id ?? `${item.name}-${i}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: Math.min(i * 0.06, 0.3) }} className="relative overflow-hidden rounded-2xl border border-[#34446d]/70 bg-gradient-to-br from-[#121b30] via-[#101728] to-[#171331] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.22)] sm:p-6">
+                <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 h-48 w-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
+                <div className="relative flex items-start gap-4 sm:gap-5">
+                  <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#00d4aa]/20 bg-gradient-to-br from-[#00d4aa]/20 to-blue-500/10 text-[#00e5d4] shadow-[0_0_24px_rgba(0,212,170,0.08)]">
+                    <MessageSquareQuote size={21} fill="currentColor" className="[&_path:last-child]:fill-[#101728]" />
+                  </div>
+                  <p className="min-w-0 whitespace-pre-wrap break-words pt-1.5 text-base font-semibold leading-7 text-slate-100 sm:text-lg">{item.quote}</p>
+                </div>
+                <div className="relative mt-6 flex flex-wrap items-center gap-x-3 gap-y-4 border-t border-white/[0.08] pt-5 sm:mt-7 sm:pt-6">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#00d4aa] via-blue-500 to-violet-500 p-px shadow-[0_0_22px_rgba(139,92,246,0.18)]">
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#15162c] text-base font-semibold text-white">{initialsFor(item.name)}</div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">{item.name}</p>
+                    <p className="mt-0.5 truncate text-sm text-slate-400">{item.role || "Visitor"}</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-400/10 bg-teal-400/[0.08] px-2.5 py-1 text-[11px] font-medium text-teal-300">
+                    <ShieldCheck size={14} className="fill-teal-400/20" /> Verified feedback
+                  </span>
                   <div className="ml-auto shrink-0"><StarRow rating={item.rating} /></div>
                 </div>
               </motion.article>)}
-            </div> : <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-12 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]"><MessageSquareQuote size={20} className="text-slate-500" /></div>
+            </div> : <div className="rounded-2xl border border-dashed border-[#34446d]/70 bg-gradient-to-br from-[#111a2b]/80 to-[#151329]/70 px-6 py-12 text-center shadow-inner shadow-white/[0.02]">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#34446d]/70 bg-slate-900/60"><MessageSquareQuote size={20} className="text-[#00d4aa]" /></div>
               <h3 className="mt-4 font-medium text-slate-200">No published feedback yet</h3>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">When feedback is approved, it will be shared here. You can be the first to leave a note.</p>
             </div>}
